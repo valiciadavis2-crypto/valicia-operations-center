@@ -1,0 +1,15 @@
+{
+  "name": "v-solutions-hr-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal HR consulting management system for V Solutions LLC.",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve .",
+    "validate": "node scripts/validate_phase5.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "serve": "^14.2.4"
+  }
+}
