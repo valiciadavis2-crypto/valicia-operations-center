@@ -1,0 +1,39 @@
+{
+  "mode": "Live Only",
+  "automationStatus": "Daily Automation Ready",
+  "connectionStatus": "No live opportunities found from connected sources yet.",
+  "lastRun": "2026-06-10T00:20:46.352Z",
+  "sourceStatuses": [
+    {
+      "id": "alabama-procurement",
+      "name": "Alabama Buys",
+      "sourceType": "Live Source",
+      "connectionStatus": "unavailable/blocked",
+      "count": 0
+    },
+    {
+      "id": "city-of-montgomery",
+      "name": "City of Montgomery opportunities",
+      "sourceType": "Live Source",
+      "connectionStatus": "unavailable/blocked",
+      "count": 0
+    },
+    {
+      "id": "sam-gov",
+      "name": "SAM.gov",
+      "sourceType": "Live Source",
+      "connectionStatus": "SAM.gov not connected — API key required.",
+      "count": 0
+    },
+    {
+      "id": "montgomery-county",
+      "name": "Montgomery County opportunities",
+      "sourceType": "Not Connected",
+      "connectionStatus": "not connected yet",
+      "count": 0
+    }
+  ],
+  "topMatches": [],
+  "message": "No live opportunities found from connected sources yet.",
+  "reviewQueue": []
+}

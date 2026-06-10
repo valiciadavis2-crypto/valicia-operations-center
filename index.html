@@ -5,19 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Valicia Operations Center</title>
     <link rel="stylesheet" href="./src/styles.css" />
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   </head>
   <body>
     <div id="root">
-      <div style="font-family: Arial, sans-serif; padding: 32px; color: #10233f;">
+      <div id="boot-status" style="font-family: Arial, sans-serif; padding: 32px; color: #10233f;">
         <h1>Valicia Operations Center</h1>
         <p>Loading app...</p>
-        <p>If this stays on screen, start the local server with <strong>start-local-site.ps1</strong> and open <strong>http://localhost:4173</strong>.</p>
+        <p id="boot-help">Starting application... If this continues, refresh the page or contact support.</p>
       </div>
     </div>
-    <script type="text/babel" data-presets="env,react" src="./src/app.jsx"></script>
+    <script src="./env.js"></script>
+    <script>
+      (function () {
+        var status = document.getElementById("boot-status");
+        var bootHelp = document.getElementById("boot-help");
+        var isLocalhost = ["localhost", "127.0.0.1", "::1"].indexOf(window.location.hostname) !== -1;
+        if (bootHelp && isLocalhost) {
+          bootHelp.innerHTML = 'If this stays on screen, start the local server with <strong>start-local-site.ps1</strong> and open <strong>http://localhost:4173</strong>.';
+        }
+        var runtime = [
+          {
+            name: "React",
+            test: function () { return window.React; },
+            sources: ["./node_modules/react/umd/react.development.js", "https://unpkg.com/react@18/umd/react.development.js", "https://cdn.jsdelivr.net/npm/react@18/umd/react.development.js"]
+          },
+          {
+            name: "ReactDOM",
+            test: function () { return window.ReactDOM; },
+            sources: ["./node_modules/react-dom/umd/react-dom.development.js", "https://unpkg.com/react-dom@18/umd/react-dom.development.js", "https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.development.js"]
+          },
+          {
+            name: "Babel",
+            test: function () { return window.Babel; },
+            sources: ["./node_modules/@babel/standalone/babel.min.js", "https://unpkg.com/@babel/standalone/babel.min.js", "https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"]
+          },
+          {
+            name: "Supabase",
+            test: function () { return window.supabase; },
+            sources: ["./node_modules/@supabase/supabase-js/dist/umd/supabase.js", "https://unpkg.com/@supabase/supabase-js@2", "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"]
+          }
+        ];
+
+        function show(message) {
+          if (status) status.querySelector("p").textContent = message;
+        }
+
+        function fail(message) {
+          if (!status) return;
+          var nextStep = isLocalhost
+            ? 'Run <strong>npm.cmd install</strong>, then restart <strong>start-local-site.ps1</strong> and refresh this page.'
+            : 'Refresh the page. If this continues, contact support.';
+          status.innerHTML = '<h1>Valicia Operations Center</h1><p><strong>Startup needs one more step.</strong></p><p>' + message + '</p><p>' + nextStep + '</p>';
+        }
+
+        function loadScript(sources, index) {
+          return new Promise(function (resolve, reject) {
+            if (index >= sources.length) {
+              reject(new Error("No script source loaded."));
+              return;
+            }
+            var script = document.createElement("script");
+            script.src = sources[index];
+            script.onload = resolve;
+            script.onerror = function () {
+              script.remove();
+              loadScript(sources, index + 1).then(resolve).catch(reject);
+            };
+            document.head.appendChild(script);
+          });
+        }
+
+        window.VALICIA_SECTION_SOURCES = {
+          home: ["./src/sections/home.jsx"],
+          reports: ["./src/sections/reports.jsx"],
+          search: ["./src/sections/search.jsx"],
+          revenue: ["./src/sections/revenue.jsx"],
+          funding: ["./src/sections/funding.jsx"],
+          hr: ["./src/sections/hr_consulting.jsx"],
+          government: ["./src/utils/opportunity-intake.jsx", "./src/sections/government.jsx"],
+          operations: ["./src/sections/operations.jsx"],
+          aiWorkspace: ["./src/sections/ai_workspace.jsx"],
+          veeAi: ["./src/sections/vee_ai.jsx"],
+          admin: ["./src/sections/admin.jsx"]
+        };
+        window.VALICIA_LOADED_SECTIONS = {};
+        window.loadValiciaSection = function (key) {
+          if (window.VALICIA_LOADED_SECTIONS[key]) return window.VALICIA_LOADED_SECTIONS[key];
+          var files = window.VALICIA_SECTION_SOURCES[key] || [];
+          window.VALICIA_LOADED_SECTIONS[key] = Promise.all(files.map(function (file) {
+            return fetch(file).then(function (response) {
+              if (!response.ok) throw new Error("The " + key + " section could not be loaded from " + file + ".");
+              return response.text();
+            });
+          })).then(function (sources) {
+            var compiled = Babel.transform(sources.join("\n"), { presets: ["env", "react"], filename: "section-" + key + ".jsx" }).code;
+            var section = document.createElement("script");
+            section.text = compiled;
+            document.body.appendChild(section);
+          });
+          return window.VALICIA_LOADED_SECTIONS[key];
+        };
+
+        runtime.reduce(function (chain, item) {
+          return chain.then(function () {
+            if (item.test()) return;
+            show("Loading " + item.name + "...");
+            return loadScript(item.sources, 0).then(function () {
+              if (!item.test()) throw new Error(item.name + " did not initialize.");
+            });
+          });
+        }, Promise.resolve()).then(function () {
+          show("Starting application...");
+          return fetch("./src/app.jsx")
+            .then(function (response) {
+              if (!response.ok) throw new Error("The application file could not be loaded from ./src/app.jsx.");
+              return response.text();
+            })
+            .then(function (source) {
+              var compiled = Babel.transform(source, { presets: ["env", "react"], filename: "src/app.jsx" }).code;
+              var app = document.createElement("script");
+              app.text = compiled;
+              document.body.appendChild(app);
+            });
+        }).catch(function (error) {
+          fail("Required browser runtime files could not be loaded locally or from the CDN. " + (error && error.message ? error.message : ""));
+        });
+      })();
+    </script>
   </body>
 </html>

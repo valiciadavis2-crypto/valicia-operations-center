@@ -1,6 +1,6 @@
 const { useEffect, useMemo, useState } = React;
 
-const today = "2026-06-06";
+const today = currentDate();
 const demoOwnerId = "demo-user";
 const configKey = "vshr-supabase-config";
 const demoDataKey = "vshr-data";
@@ -89,9 +89,10 @@ const fieldSets = {
 
 const navigation = [
   { category: "Home", pages: ["Home"] },
-  { category: "Revenue", pages: ["Revenue", "Universal Opportunities", "Funding Opportunities", "Eligibility Review", "Application Drafts", "Required Documents", "Budget & Narrative", "Submission Tracker", "Awards/Outcomes"] },
+  { category: "Vee AI", pages: ["Vee AI"] },
+  { category: "Revenue", pages: ["Revenue", "Universal Opportunities", "Makeable Product Trend Finder", "Funding Opportunities", "Eligibility Review", "Application Drafts", "Required Documents", "Budget & Narrative", "Submission Tracker", "Awards/Outcomes"] },
   { category: "HR Consulting", pages: ["Clients", "Contacts", "Engagements", "Cases", "Investigations", "Documents", "Invoices", "Reports"] },
-  { category: "Government", pages: ["Opportunities", "Opportunity Detail", "AI Fit Review", "Subcontractor Finder", "Outreach Tracker", "Reminder Queue", "Awards"] },
+  { category: "Government", pages: ["Opportunity Discovery", "Opportunities", "Opportunity Detail", "AI Fit Review", "Subcontractor Finder", "Outreach Tracker", "Reminder Queue", "Awards"] },
   { category: "Operations", pages: ["Automations", "n8n Workflows", "Workflow Health", "Logs", "Tasks", "Calendar/Deadlines"] },
   { category: "AI Workspace", pages: ["HR Document Generator", "Government Proposal Assistant", "Capability Statement Generator", "Investigation Report Generator", "Email Writer", "Prompt Library"] },
   { category: "Admin", pages: ["Settings", "Users", "Integrations", "API Keys/Secrets", "Storage", "System Status"] }
@@ -99,175 +100,288 @@ const navigation = [
 
 const hrPages = ["Clients", "Contacts", "Engagements", "Cases", "Investigations", "Documents", "Invoices", "Reports"];
 const revenuePages = ["Universal Opportunities"];
+const productTrendPages = ["Makeable Product Trend Finder"];
 const fundingPages = ["Funding Opportunities", "Eligibility Review", "Application Drafts", "Required Documents", "Budget & Narrative", "Submission Tracker", "Awards/Outcomes"];
-const governmentPages = ["Opportunities", "Opportunity Detail", "AI Fit Review", "Subcontractor Finder", "Outreach Tracker", "Reminder Queue", "Awards"];
+const governmentPages = ["Opportunity Discovery", "Opportunities", "Opportunity Detail", "AI Fit Review", "Subcontractor Finder", "Outreach Tracker", "Reminder Queue", "Awards"];
 const operationsPages = ["Automations", "n8n Workflows", "Workflow Health", "Logs", "Tasks", "Calendar/Deadlines"];
 const aiWorkspacePages = ["Government Proposal Assistant", "Capability Statement Generator", "Investigation Report Generator", "Email Writer", "Prompt Library"];
+const veeAiPages = ["Vee AI"];
 const adminPages = ["Users", "Integrations", "API Keys/Secrets", "Storage", "System Status"];
 
 const operationsMock = {
   highestValueActions: [
-    { title: "Submit Riverbend renewal proposal", detail: "Contract ends 2026-12-31. Draft terms and send by Friday.", status: "High value" },
-    { title: "Review SAM opportunity fit", detail: "HR compliance support solicitation closes soon.", status: "Due soon" },
-    { title: "Publish HR AI OS product update", detail: "Add screenshots and one email campaign for Gumroad/Stan.", status: "Revenue" }
+    { title: "No priority tasks yet", detail: "Add real clients, opportunities, invoices, or reminders to create focus items.", status: "Empty" }
   ],
-  governmentOpportunities: [
-    { title: "HR Compliance Advisory Support", agency: "Department of Labor", due: "2026-06-14", fit: 88, value: "$145,000" },
-    { title: "Employee Relations Training", agency: "GSA", due: "2026-06-21", fit: 74, value: "$82,000" }
-  ],
+  governmentOpportunities: [],
   automations: [
-    { title: "Invoice overdue sweep", detail: "Ready to run daily at 8:00 AM.", status: "Healthy" },
-    { title: "Lead capture to CRM", detail: "Waiting on n8n webhook URL.", status: "Needs connection" },
-    { title: "Government opportunity digest", detail: "Mock feed active until API is connected.", status: "Mock" }
+    { title: "Local automation tools", detail: "Manual checks can run after real records are added.", status: "Ready" },
+    { title: "External automations", detail: "Connect n8n, storefronts, payment tools, or scheduled jobs before showing live automation activity.", status: "Not connected" }
   ],
   deadlines: [
-    { title: "Magnolia Care retainer due", date: "2026-06-04", type: "Invoice" },
-    { title: "Investigation follow-up", date: "2026-06-10", type: "Client" },
-    { title: "Proposal outline review", date: "2026-06-12", type: "Government" }
+    { title: "No deadlines yet", date: "Add a real invoice, case, opportunity, or reminder to populate this view.", type: "Empty" }
   ],
-  recentSales: [
-    { source: "Gumroad", item: "HR AI OS Starter Kit", amount: "$49", date: "Today" },
-    { source: "Etsy", item: "HR Investigation Checklist", amount: "$12", date: "Yesterday" },
-    { source: "Stan Store", item: "HR Compliance Mini Toolkit", amount: "$27", date: "This week" }
-  ],
-  opportunities: [
-    { title: "HR Compliance Advisory Support", agency: "Department of Labor", solicitation_number: "DOL-26-HR-104", naics: "541612", set_aside: "WOSB", due_date: "2026-06-14", status: "Reviewing", fit_score: 88, estimated_value: 145000, next_action: "Draft capability match notes" },
-    { title: "Employee Relations Training", agency: "GSA", solicitation_number: "GSA-26-ER-219", naics: "611430", set_aside: "Small Business", due_date: "2026-06-21", status: "Pipeline", fit_score: 74, estimated_value: 82000, next_action: "Confirm subcontractor capacity" },
-    { title: "Workplace Investigation Support", agency: "VA", solicitation_number: "VA-26-INV-033", naics: "541611", set_aside: "SDVOSB partner", due_date: "2026-07-02", status: "Partner needed", fit_score: 69, estimated_value: 210000, next_action: "Identify prime partner" }
-  ]
+  recentSales: [],
+  opportunities: []
 };
 
 const defaultGovernmentData = {
-  selectedOpportunityId: "gov-1",
-  opportunities: [
-    {
-      id: "gov-1",
-      title: "HR Compliance Advisory Support",
-      agency: "Department of Labor",
-      solicitation_number: "DOL-26-HR-104",
-      naics: "541612",
-      set_aside: "WOSB",
-      due_date: "2026-06-14",
-      estimated_value: 145000,
-      status: "AI Review",
-      fit_score: 88,
-      next_action: "Draft subcontractor outreach",
-      source_url: "https://sam.gov/mock/dol-26-hr-104",
-      notes: "Strong fit for HR compliance, investigations, and employee relations advisory support.",
-      pws_summary: "Provide HR compliance advisory support, workplace policy review, training recommendations, and investigation guidance for agency HR leaders.",
-      ai_executive_summary: "This is a strong opportunity for V Solutions because it aligns with HR compliance, employee relations, documentation, and workplace investigation expertise. A subcontractor or teaming partner may strengthen federal past performance and pricing depth.",
-      summary: "Agency needs HR compliance advisory support, policy review, and workplace investigation guidance.",
-      requirements: "HR compliance expertise, federal contracting readiness, training support, documented past performance, and scalable response capacity.",
-      scope_of_work: "Review HR practices, advise on compliance questions, support documentation standards, and provide investigation and employee relations guidance.",
-      deliverables: ["Compliance advisory memo", "Policy review findings", "Training recommendations", "Investigation support summary", "Monthly status report"],
-      risks: ["Federal past performance may need a teaming partner.", "Pricing support is needed before submission.", "Scope may require rapid response capacity."],
-      required_capabilities: ["HR compliance", "Employee relations", "Workplace investigations", "Policy review", "Federal contracting readiness"],
-      subcontractor_categories: ["Federal HR compliance", "Proposal pricing", "Training facilitation"],
-      documents_needed: ["Capability statement", "Past performance summary", "Price quote", "Subcontractor commitment letter"],
-      decision: "pursue",
-      ai_review: {
-        why: "This aligns with Valicia's HR compliance, employee relations, investigations, and fractional HR advisory experience.",
-        risks: ["Federal past performance may need a teaming partner.", "Pricing support is needed before submission."],
-        missing_requirements: ["Prime/subcontractor role clarity", "Formal pricing worksheet", "Agency-specific past performance examples"],
-        recommended_next_action: "Contact two HR compliance subcontractors and one pricing partner by tomorrow.",
-        suggested_subcontractor_categories: ["Federal HR compliance", "Proposal pricing", "Training facilitation"]
-      }
-    },
-    {
-      id: "gov-2",
-      title: "Employee Relations Training",
-      agency: "GSA",
-      solicitation_number: "GSA-26-ER-219",
-      naics: "611430",
-      set_aside: "Small Business",
-      due_date: "2026-06-21",
-      estimated_value: 82000,
-      status: "Subcontractors",
-      fit_score: 74,
-      next_action: "Confirm training delivery partner",
-      source_url: "https://sam.gov/mock/gsa-26-er-219",
-      notes: "Good fit if training delivery capacity can be expanded.",
-      pws_summary: "Design and deliver employee relations training for supervisors and HR staff with supporting materials and reporting.",
-      ai_executive_summary: "Valicia can lead the HR subject matter expertise while a training partner can expand facilitation capacity and instructional design support.",
-      summary: "Training support for supervisors and HR teams on employee relations and compliant documentation.",
-      requirements: "Curriculum design, live facilitation, training materials, virtual delivery, and evaluation reporting.",
-      scope_of_work: "Develop training outline, create participant materials, deliver sessions, collect feedback, and provide final training report.",
-      deliverables: ["Training curriculum", "Facilitator guide", "Participant workbook", "Attendance/feedback report"],
-      risks: ["May require more facilitators than currently available.", "Training sample deck may be required quickly."],
-      required_capabilities: ["Employee relations", "Training facilitation", "Instructional design", "Evaluation reporting"],
-      subcontractor_categories: ["Training facilitation", "Instructional design"],
-      documents_needed: ["Training sample", "Facilitator bio", "Capability statement"],
-      decision: "maybe",
-      ai_review: {
-        why: "Valicia can lead HR subject matter expertise and partner for scale.",
-        risks: ["May require more facilitators than currently available."],
-        missing_requirements: ["Training sample deck", "Bench of facilitators"],
-        recommended_next_action: "Ask training partner for availability and sample pricing.",
-        suggested_subcontractor_categories: ["Training facilitation", "Instructional design"]
-      }
-    },
-    {
-      id: "gov-3",
-      title: "Workplace Investigation Support",
-      agency: "VA",
-      solicitation_number: "VA-26-INV-033",
-      naics: "541611",
-      set_aside: "SDVOSB partner",
-      due_date: "2026-07-02",
-      estimated_value: 210000,
-      status: "Partner Needed",
-      fit_score: 69,
-      next_action: "Identify prime partner",
-      source_url: "https://sam.gov/mock/va-26-inv-033",
-      notes: "Could be promising with the right SDVOSB prime.",
-      pws_summary: "Support workplace investigations, interviews, report writing, confidentiality practices, and case documentation.",
-      ai_executive_summary: "The work aligns with investigation strengths, but the set-aside and capacity requirements make this better as a subcontracting or teaming opportunity.",
-      summary: "Agency seeks workplace investigation support and neutral report writing.",
-      requirements: "Investigators, interview protocols, report templates, confidentiality practices, and government contract vehicle access.",
-      scope_of_work: "Conduct intake review, support interviews, document findings, draft investigation reports, and maintain confidential case files.",
-      deliverables: ["Investigation plan", "Interview summaries", "Evidence review log", "Findings report", "Recommended action memo"],
-      risks: ["Set-aside requires partner alignment.", "Volume could exceed solo capacity.", "Legal review may be needed."],
-      required_capabilities: ["Workplace investigations", "Interviewing", "Report writing", "Confidential records", "Legal review coordination"],
-      subcontractor_categories: ["SDVOSB prime", "Workplace investigators", "Legal review"],
-      documents_needed: ["Investigation capability statement", "Sample report outline", "Teaming agreement"],
-      decision: "maybe",
-      ai_review: {
-        why: "Investigation workflow fits existing HRM capabilities, but partner requirements matter.",
-        risks: ["Set-aside requires partner alignment.", "Volume could exceed solo capacity."],
-        missing_requirements: ["SDVOSB prime partner", "Investigator bench", "Legal review partner"],
-        recommended_next_action: "Shortlist prime partners and send intro outreach.",
-        suggested_subcontractor_categories: ["SDVOSB prime", "Workplace investigators", "Legal review"]
-      }
-    }
-  ],
-  subcontractors: [
-    { id: "sub-1", company_name: "Carter Federal HR Advisors", service_category: "Federal HR compliance", location: "Atlanta, GA", contact_name: "Monique Carter", email: "monique@example.com", phone: "404-555-0138", SAM_registered: true, status: "Interested", last_contact_date: "2026-06-02", notes: "Strong compliance background and available for advisory support." },
-    { id: "sub-2", company_name: "Pine Ridge Proposal Pricing", service_category: "Proposal pricing", location: "Birmingham, AL", contact_name: "Evan Price", email: "evan@example.com", phone: "205-555-0174", SAM_registered: true, status: "Email sent", last_contact_date: "2026-06-03", notes: "Can help with rate card and price narrative." },
-    { id: "sub-3", company_name: "Magnolia Training Partners", service_category: "Training facilitation", location: "Montgomery, AL", contact_name: "Tasha Green", email: "tasha@example.com", phone: "334-555-0112", SAM_registered: false, status: "Follow up needed", last_contact_date: "2026-06-01", notes: "Great training bench; needs SAM registration check." },
-    { id: "sub-4", company_name: "ValorGov Solutions", service_category: "SDVOSB prime", location: "Nashville, TN", contact_name: "Andre Willis", email: "andre@example.com", phone: "615-555-0188", SAM_registered: true, status: "Not contacted", last_contact_date: "", notes: "Potential prime partner for VA opportunity." }
-  ],
-  outreach: [
-    { id: "out-1", opportunity_id: "gov-1", subcontractor_id: "sub-1", status: "interested", follow_up_date: "2026-06-06", last_contact_date: "2026-06-02", draft_email: "", notes: "Asked for scope details and timeline." },
-    { id: "out-2", opportunity_id: "gov-1", subcontractor_id: "sub-2", status: "email sent", follow_up_date: "2026-06-07", last_contact_date: "2026-06-03", draft_email: "", notes: "Waiting on pricing support availability." },
-    { id: "out-3", opportunity_id: "gov-2", subcontractor_id: "sub-3", status: "follow up needed", follow_up_date: "2026-06-09", last_contact_date: "2026-06-01", draft_email: "", notes: "Need training delivery capacity and sample quote." }
-  ],
-  reminders: [
-    { id: "rem-1", opportunity_id: "gov-1", subcontractor_id: "sub-1", type: "Outreach follow-up", due_date: "2026-06-06", priority: "High", status: "Pending", notes: "Follow up with Carter Federal HR Advisors.", completed_at: "" },
-    { id: "rem-2", opportunity_id: "gov-1", subcontractor_id: "", type: "Opportunity due date", due_date: "2026-06-14", priority: "High", status: "Pending", notes: "Proposal due soon.", completed_at: "" }
-  ],
-  awards: [
-    { id: "awd-1", opportunity_id: "gov-0", agency: "Mock State Agency", award_amount: 24000, start_date: "2026-05-01", end_date: "2026-08-31", subcontractors_used: "None", status: "Active", notes: "Sample award record for future tracking." }
-  ]
+  selectedOpportunityId: "",
+  opportunities: [],
+  subcontractors: [],
+  outreach: [],
+  reminders: [],
+  awards: []
 };
 
-const revenueChannels = [
-  { name: "Etsy", today: 12, month: 318, pending: 0, pipeline: 1200, recent: "Investigation checklist sold" },
-  { name: "Gumroad", today: 49, month: 735, pending: 0, pipeline: 2500, recent: "HR AI OS Starter Kit sold" },
-  { name: "Stan Store", today: 27, month: 486, pending: 0, pipeline: 1800, recent: "Compliance mini toolkit sold" },
-  { name: "TikTok Shop future", today: 0, month: 0, pending: 0, pipeline: 900, recent: "Setup pending" },
-  { name: "HR AI OS", today: 0, month: 1299, pending: 0, pipeline: 6500, recent: "Demo follow-up scheduled" },
-  { name: "HR Consulting", today: 0, month: 2500, pending: 1800, pipeline: 9200, recent: "Riverbend retainer paid" },
-  { name: "Government Pipeline", today: 0, month: 0, pending: 0, pipeline: 437000, recent: "DOL opportunity added" }
+const opportunityDiscoveryAdapters = [
+  {
+    id: "alabama-procurement",
+    name: "Alabama Buys",
+    sourceType: "Live Source",
+    connectionStatus: "not checked yet",
+    liveConnected: true,
+    fetch: fetchAlabamaProcurementOpportunities
+  },
+  {
+    id: "city-of-montgomery",
+    name: "City of Montgomery opportunities",
+    sourceType: "Live Source",
+    connectionStatus: "not checked yet",
+    liveConnected: true,
+    fetch: fetchCityOfMontgomeryOpportunities
+  },
+  {
+    id: "sam-gov",
+    name: "SAM.gov",
+    sourceType: "Live Source",
+    connectionStatus: "SAM.gov not connected \u2014 API key required.",
+    liveConnected: true,
+    fetch: fetchSamGovOpportunities
+  },
+  {
+    id: "montgomery-county",
+    name: "Montgomery County opportunities",
+    sourceType: "Not Connected",
+    connectionStatus: "not connected yet",
+    liveConnected: false,
+    fetch: fetchMontgomeryCountyOpportunities
+  }
+];
+
+const opportunityDiscoverySources = opportunityDiscoveryAdapters.map(adapter => adapter.name);
+const alabamaBuysPublicSolicitationsUrl = "https://www.alabamabuys.gov/page.aspx/en/rfp/request_browse_public";
+const cityOfMontgomeryOpenGovUrl = "https://procurement.opengov.com/portal/montgomeryal";
+const cityOfMontgomeryBidsInfoUrl = "https://www.montgomeryal.gov/Home/Components/RFP/RFP/1192/160";
+const samGovOpportunitiesApiUrl = "https://api.sam.gov/opportunities/v2/search";
+const samGovApiKeyStorageKey = "valicia-sam-gov-api-key";
+
+const developerTestOpportunityDiscoveryMock = [
+  {
+    id: "disc-1",
+    title: "HR Policy Review and Employee Handbook Update",
+    agency: "City of Montgomery",
+    due_date: "2026-06-28",
+    opportunity_url: "https://www.montgomeryal.gov/mock/procurement/hr-policy-review",
+    category: "HR consulting",
+    description: "Review existing personnel policies, recommend compliance updates, and deliver an updated employee handbook draft for a small municipal department.",
+    estimated_value: 18000,
+    date_found: today,
+    source: "City of Montgomery opportunities",
+    naics: "541612",
+    local: true,
+    fits_existing_naics: true,
+    estimated_upfront_capital: 450,
+    can_leverage_subcontractors: true,
+    can_leverage_suppliers: false,
+    full_time_manageable: true,
+    complexity: "Low",
+    staffing_needs: "Owner-led with optional legal review subcontractor.",
+    equipment_needs: "Laptop, document tools, and secure file storage already available.",
+    supply_needs: "No material supplies required.",
+    likelihood_of_subcontracting: "Moderate",
+    likelihood_of_supplier_use: "Low"
+  },
+  {
+    id: "disc-2",
+    title: "Small Business Vendor Outreach Coordination",
+    agency: "Montgomery County",
+    due_date: "2026-07-03",
+    opportunity_url: "https://www.mc-ala.org/mock/purchasing/vendor-outreach",
+    category: "Administrative services",
+    description: "Coordinate vendor outreach, maintain a contact list, schedule information sessions, and prepare weekly participation reports for county procurement staff.",
+    estimated_value: 12500,
+    date_found: today,
+    source: "Montgomery County opportunities",
+    naics: "541611",
+    local: true,
+    fits_existing_naics: true,
+    estimated_upfront_capital: 300,
+    can_leverage_subcontractors: true,
+    can_leverage_suppliers: true,
+    full_time_manageable: true,
+    complexity: "Low",
+    staffing_needs: "Part-time coordination; subcontract admin support can be added if volume rises.",
+    equipment_needs: "No special equipment.",
+    supply_needs: "Possible low-cost printing or meeting supplies.",
+    likelihood_of_subcontracting: "Moderate",
+    likelihood_of_supplier_use: "Moderate"
+  },
+  {
+    id: "disc-3",
+    title: "Training Room Supplies and Workshop Logistics",
+    agency: "State of Alabama Department of Human Resources",
+    due_date: "2026-07-10",
+    opportunity_url: "https://procurement.alabama.gov/mock/training-logistics",
+    category: "Supply and coordination",
+    description: "Provide workshop supply kits, coordinate delivery, confirm room setup, and manage post-session materials inventory for regional training sessions.",
+    estimated_value: 22000,
+    date_found: today,
+    source: "Alabama procurement opportunities",
+    naics: "561110",
+    local: false,
+    fits_existing_naics: true,
+    estimated_upfront_capital: 1800,
+    can_leverage_subcontractors: true,
+    can_leverage_suppliers: true,
+    full_time_manageable: true,
+    complexity: "Moderate",
+    staffing_needs: "Owner coordination with local delivery or print supplier support.",
+    equipment_needs: "No owned equipment required if delivery is outsourced.",
+    supply_needs: "Printed materials, folders, labels, and workshop kits purchased after award or deposit.",
+    likelihood_of_subcontracting: "Moderate",
+    likelihood_of_supplier_use: "High"
+  },
+  {
+    id: "disc-4",
+    title: "Records Cleanup and Administrative Process Mapping",
+    agency: "City of Montgomery",
+    due_date: "2026-07-18",
+    opportunity_url: "https://www.montgomeryal.gov/mock/procurement/records-process-mapping",
+    category: "Administrative services",
+    description: "Document a small department's records workflow, identify process gaps, and produce a cleanup plan with templates and tracking recommendations.",
+    estimated_value: 9500,
+    date_found: today,
+    source: "City of Montgomery opportunities",
+    naics: "541611",
+    local: true,
+    fits_existing_naics: true,
+    estimated_upfront_capital: 250,
+    can_leverage_subcontractors: false,
+    can_leverage_suppliers: false,
+    full_time_manageable: true,
+    complexity: "Low",
+    staffing_needs: "Owner-led consulting project.",
+    equipment_needs: "No special equipment.",
+    supply_needs: "No material supplies required.",
+    likelihood_of_subcontracting: "Low",
+    likelihood_of_supplier_use: "Low"
+  },
+  {
+    id: "disc-5",
+    title: "County Facilities Janitorial Services - Multiple Buildings",
+    agency: "Montgomery County",
+    due_date: "2026-06-24",
+    opportunity_url: "https://www.mc-ala.org/mock/purchasing/janitorial-buildings",
+    category: "Facilities services",
+    description: "Provide recurring janitorial services across multiple county facilities, including labor, cleaning equipment, supplies, insurance, and backup coverage.",
+    estimated_value: 150000,
+    date_found: today,
+    source: "Montgomery County opportunities",
+    naics: "561720",
+    local: true,
+    fits_existing_naics: false,
+    estimated_upfront_capital: 6500,
+    can_leverage_subcontractors: true,
+    can_leverage_suppliers: true,
+    full_time_manageable: false,
+    complexity: "High",
+    staffing_needs: "Payroll-heavy recurring coverage across multiple sites.",
+    equipment_needs: "Cleaning equipment, chemicals, carts, and backup inventory.",
+    supply_needs: "High recurring supply need.",
+    likelihood_of_subcontracting: "High",
+    likelihood_of_supplier_use: "High"
+  }
+];
+
+const revenueChannels = [];
+
+const makerCapabilities = {
+  equipment: ["DTF", "UV DTF", "Sublimation", "CO2 Laser", "3D Printer"],
+  materials: [
+    "t-shirt blank", "hoodie blank", "sweatshirt blank", "tote bag", "apron", "DTF transfer",
+    "3mm acrylic", "adhesive sheet", "UV DTF print", "UV DTF wrap", "glass can", "tumbler", "mug",
+    "keychain blank", "phone case blank", "car coaster blank", "acrylic blank", "sticker vinyl",
+    "sublimation desk mat blank", "sublimation mouse pad blank", "sublimation paper", "sublimation ink",
+    "garden flag blank", "puzzle blank", "coaster blank", "aluminum photo panel", "polyester apparel",
+    "light wood", "craft board", "PLA filament"
+  ],
+  blockedEquipment: ["embroidery machine", "CNC router", "screen printing press", "crochet skill/material process", "resin pouring"],
+  blockedProcesses: ["embroidery", "crochet", "jewelry casting", "resin pouring", "screen printing", "large woodworking", "furniture"]
+};
+
+const productPipelineKey = "vshr-maker-product-pipeline";
+const pipelineStatuses = ["Idea", "Design Needed", "Prototype Needed", "Mockup Needed", "Ready to List", "Listed", "Archived"];
+
+const mockTrendSourceAdapters = [
+  {
+    id: "etsy-trending",
+    label: "Etsy trending searches",
+    status: "Disconnected - AI suggestions",
+    fetchTrends: () => [
+      trendSeed("trend-etsy-teacher-sign", "Etsy trending searches", "Back-to-school acrylic teacher name sign", "Layered acrylic sign", "Personalized gifts", "Personalized classroom name signs are showing seasonal buyer interest.", ["teacher gift", "classroom decor", "name sign", "back to school"], "Rising seasonal searches for teacher gifts", "clear", "Back to school", "Medium", 35, 8, 25, ["CO2 Laser", "UV DTF"], ["3mm acrylic", "adhesive sheet", "UV DTF print"]),
+      trendSeed("trend-etsy-crochet-plushie", "Etsy trending searches", "Crochet plushie", "Plush toy", "Toys", "Soft handmade plush characters with viral search interest.", ["crochet plush", "amigurumi", "cute plushie"], "High saves on plush listings", "clear", "All year", "High", 32, 10, 120, ["crochet skill/material process"], ["yarn", "stuffing"])
+    ]
+  },
+  {
+    id: "pinterest-trends",
+    label: "Pinterest trends",
+    status: "Disconnected - AI suggestions",
+    fetchTrends: () => [
+      trendSeed("trend-pin-desk-mat", "Pinterest trends", "Personalized desk mat", "Desk mat", "Office decor", "Custom desk mats for teachers, gamers, and home offices.", ["desk mat", "teacher desk", "office gift", "personalized"], "More pins around office refresh and teacher desks", "clear", "Back to school", "Medium", 28, 7, 12, ["Sublimation"], ["sublimation desk mat blank", "sublimation paper", "sublimation ink"]),
+      trendSeed("trend-pin-resin-tray", "Pinterest trends", "Resin river tray", "Decor tray", "Home decor", "River-style resin serving trays with embedded color effects.", ["resin tray", "river tray", "home decor"], "Popular inspiration pins", "unclear", "Holiday gifting", "High", 65, 55, 180, ["resin pouring"], ["resin", "mold", "pigment"])
+    ]
+  },
+  {
+    id: "tiktok-craft",
+    label: "TikTok craft/product trends",
+    status: "Disconnected - AI suggestions",
+    fetchTrends: () => [
+      trendSeed("trend-tt-hr-sweatshirt", "TikTok craft/product trends", "Funny HR office humor sweatshirt", "Sweatshirt", "Apparel", "Office humor sweatshirts aimed at HR, managers, and admin teams.", ["HR humor", "office sweatshirt", "work bestie", "employee relations"], "Short-form office humor posts are gaining engagement", "clear", "Fall/Winter", "Medium", 35, 12, 10, ["DTF"], ["sweatshirt blank", "DTF transfer"]),
+      trendSeed("trend-tt-glass-can-wrap", "TikTok craft/product trends", "UV DTF glass can wrap", "Glass can", "Drinkware", "Cute themed glass cans with fast personalization options.", ["glass can", "UV DTF wrap", "iced coffee cup", "teacher cup"], "Repeat product demos are getting strong saves", "clear", "Summer/Back to school", "Medium", 18, 5, 8, ["UV DTF"], ["glass can", "UV DTF wrap"])
+    ]
+  },
+  {
+    id: "amazon-movers",
+    label: "Amazon Movers & Shakers",
+    status: "Disconnected - AI suggestions",
+    fetchTrends: () => [
+      trendSeed("trend-amz-phone-stand", "Amazon Movers & Shakers", "3D printed phone stand", "Phone stand", "Desk accessories", "Simple desk phone stands with personalization and color options.", ["phone stand", "desk accessory", "3D printed gift"], "Desk accessories moving in office organization", "clear", "All year", "High", 12, 2, 90, ["3D Printer"], ["PLA filament"])
+    ]
+  },
+  {
+    id: "google-trends",
+    label: "Google Trends",
+    status: "Disconnected - AI suggestions",
+    fetchTrends: () => [
+      trendSeed("trend-google-cnc-sign", "Google Trends", "CNC carved wooden sign", "Wood sign", "Home decor", "Deep carved rustic wood signs with family names.", ["wood sign", "CNC sign", "family name sign"], "Search interest appears steady", "clear", "Holiday gifting", "High", 80, 24, 150, ["CNC router"], ["hardwood board", "stain"])
+    ]
+  },
+  {
+    id: "reddit-seasonal",
+    label: "Reddit craft communities",
+    status: "Disconnected - AI suggestions",
+    fetchTrends: () => [
+      trendSeed("trend-reddit-varsity", "Reddit craft communities", "Embroidered varsity sweatshirt", "Sweatshirt", "Apparel", "Varsity-style embroidered names and mascot sweatshirts.", ["embroidered sweatshirt", "varsity", "custom apparel"], "Discussion volume is high", "clear", "Fall/Winter", "High", 48, 18, 45, ["embroidery machine"], ["sweatshirt blank", "thread", "stabilizer"])
+    ]
+  },
+  {
+    id: "seasonal-calendar",
+    label: "Seasonal calendars",
+    status: "Disconnected - AI suggestions",
+    fetchTrends: () => [
+      trendSeed("trend-season-cake-topper", "Seasonal calendars", "Graduation acrylic cake topper", "Cake topper", "Party decor", "Fast custom graduation toppers for local pickup and shipping.", ["graduation topper", "acrylic cake topper", "class of 2026"], "Seasonal demand window is approaching", "clear", "Graduation", "Medium", 22, 4, 18, ["CO2 Laser"], ["3mm acrylic"])
+    ]
+  }
 ];
 
 const fundingDocumentTypes = [
@@ -286,190 +400,73 @@ const fundingDocumentTypes = [
 const opportunityWorkflowStages = ["Opportunity", "AI Review", "Documents", "Outreach", "Proposal/Application", "Follow Up", "Award/Won/Lost", "Revenue"];
 const opportunityTypes = ["Government Contract", "Grant", "HR Consulting Client", "Digital Product Opportunity", "AI Service Opportunity", "Speaking/Training Opportunity"];
 
-const universalOpportunitySeed = [
-  {
-    id: "ai-opp-1",
-    type: "AI Service Opportunity",
-    title: "HR AI Workflow Setup Package",
-    source: "Inbound discovery call",
-    estimated_value: 4500,
-    fit_score: 91,
-    deadline: "2026-06-24",
-    status: "AI Review",
-    next_action: "Create service scope and implementation timeline",
-    required_documents: ["Service proposal", "Implementation checklist", "Client intake notes"],
-    notes: "High-fit service opportunity for automating HR documentation and client intake."
-  },
-  {
-    id: "speak-opp-1",
-    type: "Speaking/Training Opportunity",
-    title: "Small Business HR Compliance Workshop",
-    source: "Local business association",
-    estimated_value: 2500,
-    fit_score: 84,
-    deadline: "2026-07-01",
-    status: "Outreach",
-    next_action: "Send workshop outline and speaker bio",
-    required_documents: ["Speaker bio", "Workshop outline", "W-9", "Prior training samples"],
-    notes: "Good brand-building and lead-generation opportunity."
-  }
-];
+const universalOpportunitySeed = [];
 
 const defaultFundingData = {
-  selectedFundingId: "fund-1",
-  opportunities: [
-    {
-      id: "fund-1",
-      title: "Women-Owned Business Growth Grant",
-      funder: "Mock Local Economic Development Office",
-      funding_type: "grant",
-      amount_available: 25000,
-      deadline: "2026-06-18",
-      eligibility_status: "Likely eligible",
-      fit_score: 86,
-      required_documents: ["capability statement", "business license", "WOSB certification", "budget", "resume/bio"],
-      application_url: "https://example.com/mock-growth-grant",
-      status: "drafting",
-      next_action: "Draft use of funds and community impact sections",
-      notes: "Good fit for expanding HR AI OS and government contracting readiness.",
-      eligibility_review: {
-        eligibility_match: "Strong match as a woman-owned consulting business with growth plans and documented service offerings.",
-        concerns: ["Need a concise budget narrative.", "May need proof of local business registration."],
-        missing_documents: ["Updated capability statement", "Budget", "WOSB certification"],
-        recommended_next_action: "Complete budget and owner background draft before document upload."
-      },
-      drafts: {},
-      budget_narrative: {
-        budget_total: 25000,
-        use_of_funds: "Software, automation setup, proposal support, marketing, and delivery capacity for HR consulting products.",
-        narrative: "Funding will help V Solutions LLC expand operations, improve service delivery, and increase access to practical HR compliance tools for small businesses."
-      },
-      documents: fundingDocumentTypes.map(name => ({ name, status: ["capability statement", "business license", "resume/bio"].includes(name) ? "ready" : "needed", notes: "" })),
-      outcome: { status: "not started", submitted_date: "", award_amount: 0, decision_date: "", notes: "" }
-    },
-    {
-      id: "fund-2",
-      title: "Digital Product Micro-Grant",
-      funder: "Mock Creator Economy Fund",
-      funding_type: "pitch competition",
-      amount_available: 10000,
-      deadline: "2026-06-28",
-      eligibility_status: "Reviewing",
-      fit_score: 78,
-      required_documents: ["business license", "budget", "prior work samples", "bank statements"],
-      application_url: "https://example.com/mock-creator-grant",
-      status: "reviewing",
-      next_action: "Confirm revenue history and upload product samples",
-      notes: "Could support HR templates, mini-courses, and AI workflow products.",
-      eligibility_review: {
-        eligibility_match: "Moderate fit because digital product revenue and business model are aligned.",
-        concerns: ["May require monthly sales proof.", "Pitch deck may be needed."],
-        missing_documents: ["Bank statements", "Prior work samples"],
-        recommended_next_action: "Gather recent sales screenshots and create one-page product roadmap."
-      },
-      drafts: {},
-      budget_narrative: {
-        budget_total: 10000,
-        use_of_funds: "Design, product development, video production, and launch campaigns.",
-        narrative: "Funding will accelerate digital HR product development and expand affordable compliance support."
-      },
-      documents: fundingDocumentTypes.map(name => ({ name, status: ["business license"].includes(name) ? "ready" : "needed", notes: "" })),
-      outcome: { status: "reviewing", submitted_date: "", award_amount: 0, decision_date: "", notes: "" }
-    },
-    {
-      id: "fund-3",
-      title: "State Small Business Technology Loan",
-      funder: "Mock State Development Authority",
-      funding_type: "loan",
-      amount_available: 50000,
-      deadline: "2026-07-15",
-      eligibility_status: "Maybe",
-      fit_score: 64,
-      required_documents: ["tax documents", "bank statements", "budget", "business license"],
-      application_url: "https://example.com/mock-tech-loan",
-      status: "documents needed",
-      next_action: "Decide whether loan terms fit growth plan",
-      notes: "Potential but less ideal than grants because it adds repayment obligation.",
-      eligibility_review: {
-        eligibility_match: "Possible match if technology expansion costs are documented.",
-        concerns: ["Debt may not be preferred.", "Financial documents must be current."],
-        missing_documents: ["Tax documents", "Bank statements", "Detailed budget"],
-        recommended_next_action: "Review loan terms before drafting."
-      },
-      drafts: {},
-      budget_narrative: {
-        budget_total: 50000,
-        use_of_funds: "Technology stack, automation, secure document workflows, and implementation support.",
-        narrative: "Loan proceeds would support infrastructure for scalable HR consulting and AI-enabled operations."
-      },
-      documents: fundingDocumentTypes.map(name => ({ name, status: "needed", notes: "" })),
-      outcome: { status: "documents needed", submitted_date: "", award_amount: 0, decision_date: "", notes: "" }
-    }
-  ]
-};
-
-const seed = {
-  ...emptyData,
-  settings: defaultSettings,
-  clients: [
-    { id: "c1", owner_id: demoOwnerId, company_name: "Riverbend Manufacturing", industry: "Manufacturing", employee_count: 86, address: "1200 Commerce Dr", city: "Montgomery", state: "AL", website: "https://example.com", status: "Active", contract_start_date: "2026-01-01", contract_end_date: "2026-12-31", monthly_retainer_amount: 2500, billing_frequency: "Monthly", notes: "Fractional HR support.", created_at: "2026-01-01", updated_at: today },
-    { id: "c2", owner_id: demoOwnerId, company_name: "Magnolia Care Group", industry: "Healthcare", employee_count: 42, address: "455 Wellness Ave", city: "Prattville", state: "AL", website: "https://example.org", status: "Lead", contract_start_date: "2026-05-15", contract_end_date: "2026-11-15", monthly_retainer_amount: 1800, billing_frequency: "Monthly", notes: "Needs handbook and compliance audit.", created_at: "2026-05-10", updated_at: today }
-  ],
-  contacts: [
-    { id: "ct1", owner_id: demoOwnerId, client_id: "c1", name: "Dena Brooks", title: "Owner", email: "dena@example.com", phone: "334-555-0144", role: "Owner", primary_contact: true, notes: "" },
-    { id: "ct2", owner_id: demoOwnerId, client_id: "c1", name: "Marcus Lee", title: "Plant Manager", email: "marcus@example.com", phone: "334-555-0199", role: "Manager", primary_contact: false, notes: "" },
-    { id: "ct3", owner_id: demoOwnerId, client_id: "c2", name: "Alicia Moore", title: "Finance Director", email: "alicia@example.com", phone: "334-555-0177", role: "Finance", primary_contact: true, notes: "" }
-  ],
-  engagements: [
-    { id: "e1", owner_id: demoOwnerId, client_id: "c1", service_date: "2026-05-03", service_category: "HR Consulting", description: "Monthly compliance call", hours_worked: 2, billable: true, hourly_rate: 150, invoice_status: "Paid", notes: "" },
-    { id: "e2", owner_id: demoOwnerId, client_id: "c1", service_date: "2026-05-20", service_category: "Investigation", description: "Investigation intake and planning", hours_worked: 3, billable: true, hourly_rate: 175, invoice_status: "Not Invoiced", notes: "" },
-    { id: "e3", owner_id: demoOwnerId, client_id: "c2", service_date: "2026-05-22", service_category: "Handbook", description: "Handbook gap review", hours_worked: 4, billable: true, hourly_rate: 150, invoice_status: "Not Invoiced", notes: "" }
-  ],
-  cases: [
-    { id: "k1", owner_id: demoOwnerId, case_number: "CASE-2026-001", client_id: "c1", case_type: "Employee Relations", priority: "High", status: "Open", employee_involved: "Employee A", manager_involved: "Marcus Lee", summary: "Attendance and conduct concerns.", recommendation: "", date_opened: "2026-05-08", due_date: "2026-06-05", date_closed: "", assigned_consultant: "Valicia Davis", notes: "" },
-    { id: "k2", owner_id: demoOwnerId, case_number: "CASE-2026-002", client_id: "c2", case_type: "Policy Question", priority: "Medium", status: "In Progress", employee_involved: "", manager_involved: "Alicia Moore", summary: "PTO policy update question.", recommendation: "", date_opened: "2026-05-18", due_date: "2026-06-07", date_closed: "", assigned_consultant: "Valicia Davis", notes: "" }
-  ],
-  investigations: [
-    { id: "i1", owner_id: demoOwnerId, investigation_number: "INV-2026-001", client_id: "c1", date_opened: "2026-05-19", date_closed: "", complainant: "Employee B", respondent: "Supervisor C", department: "Production", shift: "2nd", complaint_summary: "Alleged hostile conduct and retaliation.", prior_discipline: false, witness_1: "Witness A", witness_2: "Witness B", witness_3: "", evidence_reviewed: "Emails, attendance records", status: "Interviews Scheduled", findings: "Inconclusive", recommended_action: "", final_summary: "", investigator_name: "Valicia Davis", follow_up_date: "2026-06-10", notes: "" }
-  ],
-  invoices: [
-    { id: "v1", owner_id: demoOwnerId, invoice_number: "VS-2026-001", client_id: "c1", invoice_date: "2026-05-01", due_date: "2026-05-16", billing_period_start: "2026-05-01", billing_period_end: "2026-05-31", status: "Paid", subtotal: 2500, discount: 0, tax: 0, total: 2500, payment_date: "2026-05-12", payment_method: "ACH", notes: "Monthly retainer" },
-    { id: "v2", owner_id: demoOwnerId, invoice_number: "VS-2026-002", client_id: "c2", invoice_date: "2026-05-20", due_date: "2026-06-04", billing_period_start: "2026-05-15", billing_period_end: "2026-06-14", status: "Sent", subtotal: 1800, discount: 0, tax: 0, total: 1800, payment_date: "", payment_method: "", notes: "Initial retainer" }
-  ],
-  invoice_line_items: [
-    { id: "li1", owner_id: demoOwnerId, invoice_id: "v1", description: "Monthly HR consulting retainer", service_category: "HR Consulting", quantity: 1, rate: 2500, amount: 2500 },
-    { id: "li2", owner_id: demoOwnerId, invoice_id: "v2", description: "Initial monthly retainer", service_category: "HR Consulting", quantity: 1, rate: 1800, amount: 1800 }
-  ],
-  documents: [
-    { id: "d1", owner_id: demoOwnerId, client_id: "c1", title: "Signed Consulting Agreement", document_type: "Contract", file_name: "riverbend-agreement.pdf", storage_path: "", expiration_date: "2026-12-31", notes: "", created_at: "2026-01-01" }
-  ],
-  ai_documents: [],
-  notes: [
-    { id: "n1", owner_id: demoOwnerId, parent_type: "client", parent_id: "c1", note_body: "Prepare renewal discussion before Q4.", created_by: demoOwnerId, created_at: "2026-05-30" }
-  ],
-  activity_logs: [
-    { id: "a1", owner_id: demoOwnerId, action: "Client created", parent_type: "client", parent_id: "c1", message: "Riverbend Manufacturing added.", created_at: "2026-01-01" },
-    { id: "a2", owner_id: demoOwnerId, action: "Invoice created", parent_type: "invoice", parent_id: "v2", message: "VS-2026-002 created.", created_at: "2026-05-20" }
-  ]
+  selectedFundingId: "",
+  opportunities: []
 };
 
 function loadDemoData() {
   const saved = localStorage.getItem(demoDataKey);
-  return saved ? { ...emptyData, ...JSON.parse(saved) } : seed;
+  return saved ? sanitizeLocalBusinessData({ ...emptyData, ...JSON.parse(saved) }) : { ...emptyData, settings: defaultSettings };
 }
 
 function saveDemoData(data) {
   localStorage.setItem(demoDataKey, JSON.stringify(data));
 }
 
+function isSeedBusinessRecord(item = {}) {
+  const text = `${item.id || ""} ${item.company_name || ""} ${item.name || ""} ${item.email || ""} ${item.invoice_number || ""} ${item.case_number || ""} ${item.investigation_number || ""} ${item.title || ""} ${item.file_name || ""} ${item.note_body || ""} ${item.message || ""}`;
+  return /Riverbend Manufacturing|Magnolia Care Group|Dena Brooks|Marcus Lee|Alicia Moore|VS-2026-00[12]|CASE-2026-00[12]|INV-2026-001|riverbend-agreement\.pdf|Riverbend Manufacturing added|VS-2026-002 created/i.test(text);
+}
+
+function sanitizeLocalBusinessData(raw = {}) {
+  const data = { ...emptyData, ...raw, settings: { ...defaultSettings, ...(raw.settings || {}) } };
+  const clients = (data.clients || []).filter(item => !isSeedBusinessRecord(item));
+  const clientIds = new Set(clients.map(item => item.id));
+  const contacts = (data.contacts || []).filter(item => clientIds.has(item.client_id) && !isSeedBusinessRecord(item));
+  const engagements = (data.engagements || []).filter(item => clientIds.has(item.client_id) && !isSeedBusinessRecord(item));
+  const cases = (data.cases || []).filter(item => clientIds.has(item.client_id) && !isSeedBusinessRecord(item));
+  const investigations = (data.investigations || []).filter(item => clientIds.has(item.client_id) && !isSeedBusinessRecord(item));
+  const invoices = (data.invoices || []).filter(item => clientIds.has(item.client_id) && !isSeedBusinessRecord(item));
+  const invoiceIds = new Set(invoices.map(item => item.id));
+  return {
+    ...data,
+    clients,
+    contacts,
+    engagements,
+    cases,
+    investigations,
+    invoices,
+    invoice_line_items: (data.invoice_line_items || []).filter(item => invoiceIds.has(item.invoice_id) && !isSeedBusinessRecord(item)),
+    documents: (data.documents || []).filter(item => (!item.client_id || clientIds.has(item.client_id)) && !isSeedBusinessRecord(item)),
+    notes: (data.notes || []).filter(item => !isSeedBusinessRecord(item)),
+    activity_logs: (data.activity_logs || []).filter(item => !isSeedBusinessRecord(item))
+  };
+}
+
 function loadGovernmentData() {
   const saved = localStorage.getItem(governmentDataKey);
   const data = saved ? { ...defaultGovernmentData, ...JSON.parse(saved) } : defaultGovernmentData;
+  const opportunities = (data.opportunities || []).map(normalizeGovernmentOpportunity).filter(item => !isGovernmentMockOpportunity(item));
+  const opportunityIds = new Set(opportunities.map(item => item.id));
+  const subcontractors = (data.subcontractors || []).map(normalizeGovernmentSubcontractor).filter(item => !isGovernmentMockSubcontractor(item));
+  const subcontractorIds = new Set(subcontractors.map(item => item.id));
+  const outreach = (data.outreach || [])
+    .map(normalizeGovernmentOutreach)
+    .filter(item => opportunityIds.has(item.opportunity_id) && subcontractorIds.has(item.subcontractor_id) && !isGovernmentMockOutreach(item));
+  const reminders = (data.reminders || [])
+    .map(normalizeGovernmentReminder)
+    .filter(item => (!item.opportunity_id || opportunityIds.has(item.opportunity_id)) && (!item.subcontractor_id || subcontractorIds.has(item.subcontractor_id)) && !isGovernmentMockReminder(item));
   return {
     ...data,
-    opportunities: (data.opportunities || []).map(normalizeGovernmentOpportunity),
-    outreach: (data.outreach || []).map(item => ({ ...item, status: normalizeOutreachStatus(item.status), created_at: item.created_at || today, response_summary: item.response_summary || "" })),
-    reminders: (data.reminders || []).map(normalizeGovernmentReminder)
+    selectedOpportunityId: opportunityIds.has(data.selectedOpportunityId) ? data.selectedOpportunityId : opportunities[0]?.id || "",
+    opportunities,
+    subcontractors,
+    outreach,
+    reminders,
+    awards: (data.awards || []).filter(item => !isGovernmentMockAward(item))
   };
 }
 
@@ -477,13 +474,52 @@ function saveGovernmentData(data) {
   localStorage.setItem(governmentDataKey, JSON.stringify(data));
 }
 
+function isGovernmentMockOpportunity(item = {}) {
+  const text = `${item.id || ""} ${item.title || ""} ${item.agency || ""} ${item.solicitation_number || ""} ${item.source_url || ""} ${item.notes || ""}`;
+  return /^gov-[123]$/.test(item.id || "")
+    || /\/mock\//i.test(item.source_url || "")
+    || /DOL-26-HR-104|GSA-26-ER-219|VA-26-INV-033|HR Compliance Advisory Support|Employee Relations Training|Workplace Investigation Support/i.test(text);
+}
+
+function isGovernmentMockSubcontractor(item = {}) {
+  const text = `${item.id || ""} ${item.company_name || ""} ${item.email || ""} ${item.notes || ""}`;
+  return /^sub-[1234]$/.test(item.id || "")
+    || /Carter Federal HR Advisors|Pine Ridge Proposal Pricing|Magnolia Training Partners|ValorGov Solutions|example\.com/i.test(text);
+}
+
+function isGovernmentMockOutreach(item = {}) {
+  return /^out-[123]$/.test(item.id || "") || /^gov-[123]$/.test(item.opportunity_id || "") || /^sub-[1234]$/.test(item.subcontractor_id || "");
+}
+
+function isGovernmentMockReminder(item = {}) {
+  const text = `${item.id || ""} ${item.notes || ""}`;
+  return /^rem-[12]$/.test(item.id || "") || /^gov-[123]$/.test(item.opportunity_id || "") || /^sub-[1234]$/.test(item.subcontractor_id || "") || /Carter Federal HR Advisors|Proposal due soon/i.test(text);
+}
+
+function isGovernmentMockAward(item = {}) {
+  const text = `${item.id || ""} ${item.agency || ""} ${item.notes || ""}`;
+  return /^awd-1$/.test(item.id || "") || /Mock State Agency|Sample award record/i.test(text);
+}
+
 function loadFundingData() {
   const saved = localStorage.getItem(fundingDataKey);
-  return saved ? { ...defaultFundingData, ...JSON.parse(saved) } : defaultFundingData;
+  const data = saved ? { ...defaultFundingData, ...JSON.parse(saved) } : defaultFundingData;
+  const opportunities = (data.opportunities || []).filter(item => !isMockFundingOpportunity(item));
+  return {
+    ...data,
+    selectedFundingId: opportunities.some(item => item.id === data.selectedFundingId) ? data.selectedFundingId : opportunities[0]?.id || "",
+    opportunities
+  };
 }
 
 function saveFundingData(data) {
   localStorage.setItem(fundingDataKey, JSON.stringify(data));
+}
+
+function isMockFundingOpportunity(item = {}) {
+  const text = `${item.id || ""} ${item.title || ""} ${item.funder || ""} ${item.application_url || ""} ${item.notes || ""}`;
+  return /^fund-[123]$/.test(item.id || "")
+    || /Mock Local Economic Development Office|Mock Creator Economy Fund|Mock State Development Authority|example\.com\/mock|Women-Owned Business Growth Grant|Digital Product Micro-Grant|State Small Business Technology Loan/i.test(text);
 }
 
 function loadConfig() {
@@ -508,6 +544,16 @@ function normalizeSupabaseUrl(value) {
 
 function uid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function currentDate() {
+  const date = new Date();
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function currentDateTime() {
+  return new Date().toLocaleString();
 }
 
 function makeSupabase(config) {
@@ -577,6 +623,145 @@ function governmentOpportunityPayload(values) {
   };
 }
 
+const subcontractorStatuses = ["not contacted", "emailed", "called", "responded", "interested", "not interested"];
+const samRegistrationOptions = ["unknown", "yes", "no"];
+
+function normalizeSamRegistrationStatus(item = {}) {
+  const raw = String(item.sam_registration_status || item.sam_registered_status || "").toLowerCase();
+  if (samRegistrationOptions.includes(raw)) return raw;
+  if (item.SAM_registered === true || item.sam_registered === true) return "yes";
+  if (item.SAM_registered === false || item.sam_registered === false) return "no";
+  return "unknown";
+}
+
+function normalizeSubcontractorStatus(status = "") {
+  const text = String(status || "").toLowerCase();
+  const map = {
+    "not contacted": "not contacted",
+    drafted: "not contacted",
+    draft: "not contacted",
+    ready: "not contacted",
+    sent: "emailed",
+    "email sent": "emailed",
+    emailed: "emailed",
+    called: "called",
+    responded: "responded",
+    interested: "interested",
+    declined: "not interested",
+    "not interested": "not interested",
+    "quote requested": "interested",
+    "quote received": "interested",
+    "follow up needed": "emailed",
+    "partner selected": "interested"
+  };
+  return map[text] || (subcontractorStatuses.includes(text) ? text : "not contacted");
+}
+
+function normalizeGovernmentSubcontractor(item = {}) {
+  const samStatus = normalizeSamRegistrationStatus(item);
+  return {
+    id: item.id || uid("sub"),
+    company_name: item.company_name || "",
+    service_category: item.service_category || "",
+    location: item.location || "",
+    contact_name: item.contact_name || "",
+    email: item.email || "",
+    phone: item.phone || "",
+    SAM_registered: samStatus === "yes",
+    sam_registration_status: samStatus,
+    status: normalizeSubcontractorStatus(item.status),
+    last_contact_date: item.last_contact_date || "",
+    next_follow_up_date: item.next_follow_up_date || item.follow_up_date || "",
+    notes: item.notes || "",
+    created_at: item.created_at,
+    updated_at: item.updated_at
+  };
+}
+
+function governmentSubcontractorPayload(item) {
+  const samStatus = normalizeSamRegistrationStatus(item);
+  return {
+    id: item.id,
+    company_name: item.company_name || "",
+    service_category: item.service_category || "",
+    location: item.location || "",
+    contact_name: item.contact_name || "",
+    email: item.email || "",
+    phone: item.phone || "",
+    sam_registered: samStatus === "yes",
+    sam_registration_status: samStatus,
+    status: normalizeSubcontractorStatus(item.status),
+    last_contact_date: item.last_contact_date || null,
+    next_follow_up_date: item.next_follow_up_date || null,
+    notes: item.notes || ""
+  };
+}
+
+function normalizeGovernmentOutreach(item = {}) {
+  return {
+    id: item.id || uid("out"),
+    opportunity_id: item.opportunity_id || "",
+    subcontractor_id: item.subcontractor_id || "",
+    status: normalizeOutreachStatus(item.status),
+    created_at: item.created_at || today,
+    follow_up_date: item.follow_up_date || "",
+    last_contact_date: item.last_contact_date || "",
+    draft_email: item.draft_email || "",
+    notes: item.notes || "",
+    response_summary: item.response_summary || ""
+  };
+}
+
+function governmentOutreachPayload(item) {
+  return {
+    id: item.id,
+    opportunity_id: item.opportunity_id,
+    subcontractor_id: item.subcontractor_id || null,
+    status: normalizeOutreachStatus(item.status),
+    created_at: item.created_at || today,
+    follow_up_date: item.follow_up_date || null,
+    last_contact_date: item.last_contact_date || null,
+    draft_email: item.draft_email || "",
+    notes: item.notes || "",
+    response_summary: item.response_summary || ""
+  };
+}
+
+function governmentReminderPayload(item) {
+  const reminder = normalizeGovernmentReminder(item);
+  return {
+    id: reminder.id,
+    opportunity_id: reminder.opportunity_id,
+    subcontractor_id: reminder.subcontractor_id || null,
+    type: reminder.type,
+    due_date: reminder.due_date || today,
+    priority: reminder.priority,
+    status: reminder.status,
+    notes: reminder.notes || "",
+    completed_at: reminder.completed_at || null
+  };
+}
+
+function governmentAwardPayload(opportunity) {
+  const outcome = normalizeAwardOutcome(opportunity.award_outcome, opportunity);
+  return {
+    id: `awd-${opportunity.id}`,
+    opportunity_id: opportunity.id,
+    award_status: outcome.award_status,
+    award_date: outcome.award_date || null,
+    award_amount: Number(outcome.award_amount || 0),
+    prime_or_subcontract: outcome.prime_or_subcontract || "Prime",
+    contract_number: outcome.contract_number || "",
+    period_of_performance: outcome.period_of_performance || "",
+    awarding_agency: outcome.awarding_agency || "",
+    assigned_subcontractors: outcome.assigned_subcontractors || [],
+    internal_notes: outcome.internal_notes || "",
+    reason_lost: outcome.reason_lost || "",
+    winning_competitor: outcome.winning_competitor || "",
+    lessons_learned: outcome.lessons_learned || ""
+  };
+}
+
 function parseOpportunityText(text = "", url = "") {
   const clean = String(text || "").trim();
   const lines = clean.split("\n").map(line => line.trim()).filter(Boolean);
@@ -607,6 +792,38 @@ function parseOpportunityText(text = "", url = "") {
     created_at: today,
     notes: description.slice(0, 220)
   });
+}
+
+function suggestFulfillmentPartners(text, category) {
+  const combined = `${text || ""} ${category || ""}`.toLowerCase();
+  const list = [];
+  if (/supply|supplies|materials|equipment|product|printing|books|paper|furniture|uniform|janitorial|cleaning|food|commodity|kit|parts/.test(combined))
+    list.push({ role: "Supplier", reason: "Opportunity involves goods, materials, or physical products.", search: `${category || "government"} supplier Alabama small business` });
+  if (/install|maintenance|repair|IT\b|technical|software|electrical|plumbing|hvac|landscap|security|translation|interpreter|medical|clinical|network|data|cyber/.test(combined))
+    list.push({ role: "Subcontractor", reason: "Specialized labor or technical service language detected.", search: `${category || "government"} subcontractor Montgomery Alabama` });
+  list.push({ role: "Pricing Partner", reason: "Government bids require detailed pricing and cost breakdowns.", search: "government contract pricing consultant Alabama" });
+  if (/deliver|transport|logistics|shipping|distribution|freight|courier/.test(combined))
+    list.push({ role: "Delivery — Logistics", reason: "Delivery or distribution requirements detected.", search: "delivery logistics partner Alabama small business" });
+  if (/install|setup|deploy|configure|assembl/.test(combined))
+    list.push({ role: "Installer", reason: "Installation or deployment work identified.", search: "installer contractor Alabama" });
+  list.push({ role: "Proposal Support", reason: "All government bids benefit from a professional proposal writer.", search: "government proposal writer small business Alabama" });
+  return list;
+}
+
+function generateIntakeSearchTerms(title, agency, category, text) {
+  const combined = `${title || ""} ${category || ""} ${text || ""}`.toLowerCase();
+  const terms = [];
+  if (title) terms.push(`${title} government contract`);
+  if (agency) terms.push(`${agency} vendor registration`);
+  if (category) terms.push(`${category} small business Alabama`);
+  if (/hr\b|human resources|personnel|workforce/.test(combined)) terms.push("HR consulting Alabama", "human resources small business vendor");
+  if (/training/.test(combined)) terms.push("training provider Alabama", "workforce training subcontractor");
+  if (/supply|supplies|materials/.test(combined)) terms.push("office supplies Alabama government vendor");
+  if (/IT\b|technology|software|computer|network/.test(combined)) terms.push("IT subcontractor Alabama", "technology services small business");
+  if (/janitorial|cleaning|custodial/.test(combined)) terms.push("janitorial services Montgomery AL");
+  if (/admin|clerical|office support/.test(combined)) terms.push("administrative services Alabama subcontractor");
+  terms.push("SAM.gov small business", "Alabama small business vendor");
+  return [...new Set(terms)].slice(0, 10);
 }
 
 function normalizeDateInput(value) {
@@ -778,8 +995,19 @@ function App() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sectionReady, setSectionReady] = useState({ home: false, reports: false, search: false, funding: false, hr: false, government: false, admin: false, operations: false, aiWorkspace: false, veeAi: false });
 
   const realMode = !!supabaseClient && !!session && !demoMode;
+  const homeSectionActive = page === "Home";
+  const reportsSectionActive = page === "Reports";
+  const searchSectionActive = !!query;
+  const fundingSectionActive = fundingPages.includes(page);
+  const hrSectionActive = page === "Documents" || hrPages.includes(page);
+  const governmentSectionActive = governmentPages.includes(page);
+  const adminSectionActive = page === "Settings" || adminPages.includes(page);
+  const operationsSectionActive = operationsPages.includes(page);
+  const aiWorkspaceSectionActive = aiWorkspacePages.includes(page);
+  const veeAiSectionActive = veeAiPages.includes(page);
 
   useEffect(() => {
     if (!supabaseClient || demoMode) {
@@ -805,6 +1033,116 @@ function App() {
   useEffect(() => {
     if (realMode) loadSupabaseData();
   }, [realMode]);
+
+  useEffect(() => {
+    if (!homeSectionActive || sectionReady.home || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("home").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, home: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load Home.");
+    });
+    return () => { alive = false; };
+  }, [homeSectionActive, sectionReady.home]);
+
+  useEffect(() => {
+    if (!reportsSectionActive || sectionReady.reports || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("reports").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, reports: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load Reports.");
+    });
+    return () => { alive = false; };
+  }, [reportsSectionActive, sectionReady.reports]);
+
+  useEffect(() => {
+    if (!searchSectionActive || sectionReady.search || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("search").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, search: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load Search.");
+    });
+    return () => { alive = false; };
+  }, [searchSectionActive, sectionReady.search]);
+
+  useEffect(() => {
+    if (!fundingSectionActive || sectionReady.funding || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("funding").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, funding: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load Funding.");
+    });
+    return () => { alive = false; };
+  }, [fundingSectionActive, sectionReady.funding]);
+
+  useEffect(() => {
+    if (!hrSectionActive || sectionReady.hr || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("hr").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, hr: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load HR Consulting.");
+    });
+    return () => { alive = false; };
+  }, [hrSectionActive, sectionReady.hr]);
+
+  useEffect(() => {
+    if (!governmentSectionActive || sectionReady.government || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("government").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, government: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load Government.");
+    });
+    return () => { alive = false; };
+  }, [governmentSectionActive, sectionReady.government]);
+
+  useEffect(() => {
+    if (!adminSectionActive || sectionReady.admin || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("admin").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, admin: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load Admin.");
+    });
+    return () => { alive = false; };
+  }, [adminSectionActive, sectionReady.admin]);
+
+  useEffect(() => {
+    if (!operationsSectionActive || sectionReady.operations || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("operations").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, operations: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load Operations.");
+    });
+    return () => { alive = false; };
+  }, [operationsSectionActive, sectionReady.operations]);
+
+  useEffect(() => {
+    if (!aiWorkspaceSectionActive || sectionReady.aiWorkspace || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("aiWorkspace").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, aiWorkspace: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load AI Workspace.");
+    });
+    return () => { alive = false; };
+  }, [aiWorkspaceSectionActive, sectionReady.aiWorkspace]);
+
+  useEffect(() => {
+    if (!veeAiSectionActive || sectionReady.veeAi || !window.loadValiciaSection) return;
+    let alive = true;
+    window.loadValiciaSection("veeAi").then(() => {
+      if (alive) setSectionReady(prev => ({ ...prev, veeAi: true }));
+    }).catch(err => {
+      if (alive) setError(err.message || "Unable to load Vee AI.");
+    });
+    return () => { alive = false; };
+  }, [veeAiSectionActive, sectionReady.veeAi]);
 
   const storeConfig = next => {
     const cleaned = {
@@ -871,29 +1209,108 @@ function App() {
   };
 
   const updateGovernmentData = next => {
+    const previous = governmentData;
     setGovernmentData(next);
-    saveGovernmentData(next);
+    if (!realMode) {
+      saveGovernmentData(next);
+      return;
+    }
+    persistGovernmentData(previous, next).catch(err => {
+      setError(err.message || "Unable to save government command center data.");
+    });
+  };
+
+  const sameRecord = (left, right) => JSON.stringify(left || null) === JSON.stringify(right || null);
+
+  const persistGovernmentRows = async (table, previousRows, nextRows, payloadFor) => {
+    const previousById = new Map((previousRows || []).filter(item => item.id).map(item => [item.id, item]));
+    const nextById = new Map((nextRows || []).filter(item => item.id).map(item => [item.id, item]));
+    const removedIds = [...previousById.keys()].filter(id => !nextById.has(id));
+    if (removedIds.length) {
+      const deleteResult = await supabaseClient.from(table).delete().in("id", removedIds);
+      if (deleteResult.error) throw deleteResult.error;
+    }
+    const changed = [...nextById.values()].filter(item => !sameRecord(previousById.get(item.id), item));
+    if (changed.length) {
+      const upsertResult = await supabaseClient.from(table).upsert(changed.map(item => ({ ...payloadFor(item), owner_id: session.user.id })));
+      if (upsertResult.error) throw upsertResult.error;
+    }
+  };
+
+  const persistGovernmentData = async (previous, next) => {
+    const changedOpportunities = (next.opportunities || []).filter(item => {
+      const old = (previous.opportunities || []).find(row => row.id === item.id);
+      return old && !sameRecord(old, item);
+    });
+    for (const item of changedOpportunities) {
+      const updateResult = await supabaseClient.from("government_opportunities").update(governmentOpportunityPayload(item)).eq("id", item.id);
+      if (updateResult.error) throw updateResult.error;
+    }
+    await persistGovernmentRows("government_subcontractors", previous.subcontractors || [], next.subcontractors || [], governmentSubcontractorPayload);
+    await persistGovernmentRows("government_outreach", previous.outreach || [], next.outreach || [], governmentOutreachPayload);
+    await persistGovernmentRows("government_reminders", previous.reminders || [], next.reminders || [], governmentReminderPayload);
+
+    const previousAwardRows = (previous.opportunities || []).map(item => ({ id: `awd-${item.id}`, ...governmentAwardPayload(item) }));
+    const nextAwardRows = (next.opportunities || []).map(item => ({ id: `awd-${item.id}`, ...governmentAwardPayload(item) }));
+    await persistGovernmentRows("government_awards", previousAwardRows, nextAwardRows, item => item);
   };
 
   const loadGovernmentOpportunities = async () => {
     if (!realMode) return;
-    const result = await supabaseClient
-      .from("government_opportunities")
-      .select("*")
-      .order("due_date", { ascending: true, nullsFirst: false });
-    if (result.error) {
-      const message = result.error.message || "";
-      if (message.includes("government_opportunities") || message.includes("schema cache")) {
-        setNotice("Government opportunities are using local data. Run migration 003_government_opportunities.sql to enable Supabase persistence.");
+    const [opportunitiesResult, subcontractorsResult, outreachResult, remindersResult, awardsResult] = await Promise.all([
+      supabaseClient.from("government_opportunities").select("*").order("due_date", { ascending: true, nullsFirst: false }),
+      supabaseClient.from("government_subcontractors").select("*").order("company_name"),
+      supabaseClient.from("government_outreach").select("*").order("created_at", { ascending: false }),
+      supabaseClient.from("government_reminders").select("*").order("due_date", { ascending: true }),
+      supabaseClient.from("government_awards").select("*")
+    ]);
+    const results = [opportunitiesResult, subcontractorsResult, outreachResult, remindersResult, awardsResult];
+    const failed = results.find(result => result.error);
+    if (failed) {
+      const message = failed.error.message || "";
+      if (message.includes("government_") || message.includes("schema cache")) {
+        setNotice("Government command center is using local data. Run the updated 003_government_opportunities.sql migration to enable full Supabase persistence.");
         return;
       }
-      throw result.error;
+      throw failed.error;
     }
-    const opportunities = (result.data || []).map(normalizeGovernmentOpportunity);
+    const subcontractors = (subcontractorsResult.data || []).map(normalizeGovernmentSubcontractor).filter(item => !isGovernmentMockSubcontractor(item));
+    const awards = (awardsResult.data || []).filter(item => !isGovernmentMockAward(item));
+    const awardsByOpportunityId = new Map(awards.map(item => [item.opportunity_id, item]));
+    const opportunities = (opportunitiesResult.data || []).map(item => {
+      const award = awardsByOpportunityId.get(item.id);
+      return normalizeGovernmentOpportunity({
+        ...item,
+        award_outcome: award ? {
+          award_status: award.award_status,
+          award_date: award.award_date,
+          award_amount: award.award_amount,
+          prime_or_subcontract: award.prime_or_subcontract,
+          contract_number: award.contract_number,
+          period_of_performance: award.period_of_performance,
+          awarding_agency: award.awarding_agency,
+          assigned_subcontractors: award.assigned_subcontractors || [],
+          internal_notes: award.internal_notes,
+          reason_lost: award.reason_lost,
+          winning_competitor: award.winning_competitor,
+          lessons_learned: award.lessons_learned
+        } : {}
+      });
+    }).filter(item => !isGovernmentMockOpportunity(item));
+    const opportunityIds = new Set(opportunities.map(item => item.id));
+    const subcontractorIds = new Set(subcontractors.map(item => item.id));
     setGovernmentData(prev => ({
       ...prev,
       selectedOpportunityId: opportunities.some(item => item.id === prev.selectedOpportunityId) ? prev.selectedOpportunityId : opportunities[0]?.id || "",
-      opportunities
+      opportunities,
+      subcontractors,
+      outreach: (outreachResult.data || [])
+        .map(normalizeGovernmentOutreach)
+        .filter(item => opportunityIds.has(item.opportunity_id) && subcontractorIds.has(item.subcontractor_id) && !isGovernmentMockOutreach(item)),
+      reminders: (remindersResult.data || [])
+        .map(normalizeGovernmentReminder)
+        .filter(item => (!item.opportunity_id || opportunityIds.has(item.opportunity_id)) && (!item.subcontractor_id || subcontractorIds.has(item.subcontractor_id)) && !isGovernmentMockReminder(item)),
+      awards
     }));
   };
 
@@ -916,7 +1333,7 @@ function App() {
         reminders: mergeGovernmentReminders(governmentData.reminders, automaticOpportunityReminders(record))
       });
       setNotice(id ? "Government opportunity updated." : "Government opportunity created.");
-      return;
+      return record;
     }
     try {
       const request = id
@@ -924,12 +1341,22 @@ function App() {
         : supabaseClient.from("government_opportunities").insert({ ...payload, owner_id: session.user.id }).select().single();
       const result = await request;
       if (result.error) throw result.error;
+      const savedOpportunity = normalizeGovernmentOpportunity(result.data);
+      const reminderAdditions = automaticOpportunityReminders(savedOpportunity);
+      if (reminderAdditions.length) {
+        const reminderResult = await supabaseClient.from("government_reminders").upsert(
+          reminderAdditions.map(item => ({ ...governmentReminderPayload(item), owner_id: session.user.id }))
+        );
+        if (reminderResult.error) throw reminderResult.error;
+      }
       await logActivity(id ? "Government opportunity updated" : "Government opportunity created", "government_opportunity", result.data.id, `${result.data.title} saved.`);
       await loadGovernmentOpportunities();
       setGovernmentData(prev => ({ ...prev, selectedOpportunityId: result.data.id }));
       setNotice(id ? "Government opportunity updated." : "Government opportunity created.");
+      return savedOpportunity;
     } catch (err) {
       setError(err.message || "Unable to save government opportunity.");
+      return null;
     }
   };
 
@@ -1271,7 +1698,7 @@ function App() {
     <div className="app">
       <a className="skip-link" href="#main-content">Skip to content</a>
       <aside className="sidebar" aria-label="Primary navigation">
-        <div className="brand"><h1>Valicia Operations Center</h1><span>{realMode ? "Supabase secured mode" : "Demo mode"}</span></div>
+        <div className="brand"><h1>Valicia Operations Center</h1><span>{realMode ? "Supabase secured mode" : "Local mode"}</span></div>
         <nav className="nav category-nav" aria-label="Main sections">
           {navigation.map(section => {
             const isActive = section.category === activeCategory;
@@ -1293,30 +1720,32 @@ function App() {
           <label className="sr-only" htmlFor="global-search">Global search</label>
           <input id="global-search" className="search" aria-label="Global search" placeholder="Search clients, contacts, invoices, documents..." value={query} onChange={e => setQuery(e.target.value)} />
           {loading && <span className="mode">Syncing...</span>}
-          <span className="mode">{realMode ? session.user.email : "Phase 5 Demo"}</span>
+          <span className="mode">{realMode ? session.user.email : "Local workspace"}</span>
           {realMode && <button className="btn secondary" onClick={signOut}>Sign out</button>}
         </div>
         <section className="content">
           {notice && <Banner type="info" text={notice} onClose={() => setNotice("")} />}
           {error && <Banner type="error" text={error} onClose={() => setError("")} />}
-          {query ? <Search data={data} query={query} setPage={setPage} /> :
-            page === "Home" ? <HomeDashboard data={data} metrics={metrics} governmentData={governmentData} fundingData={fundingData} realMode={realMode} runAutomations={runAutomations} setPage={setPage} /> :
+          {query ? (sectionReady.search ? <Search data={data} query={query} setPage={setPage} /> : <Splash text="Loading Search..." />) :
+            page === "Home" ? (sectionReady.home ? <HomeDashboard data={data} metrics={metrics} governmentData={governmentData} fundingData={fundingData} realMode={realMode} runAutomations={runAutomations} setPage={setPage} /> : <Splash text="Loading Home..." />) :
             page === "Revenue" ? <RevenueCenter metrics={metrics} fundingData={fundingData} governmentData={governmentData} data={data} setPage={setPage} /> :
+            productTrendPages.includes(page) ? <MakeableProductTrendFinder /> :
             revenuePages.includes(page) ? <UniversalOpportunityEngine data={data} governmentData={governmentData} fundingData={fundingData} setPage={setPage} /> :
-            fundingPages.includes(page) ? <FundingCenter page={page} fundingData={fundingData} updateFundingData={updateFundingData} setPage={setPage} /> :
-            page === "Reports" ? <Reports data={data} /> :
-            page === "Settings" ? <Settings data={data} config={config} saveSettings={saveSettings} exportBackup={exportBackup} realMode={realMode} /> :
+            fundingPages.includes(page) ? (sectionReady.funding ? <FundingCenter page={page} fundingData={fundingData} updateFundingData={updateFundingData} setPage={setPage} /> : <Splash text="Loading Funding..." />) :
+            page === "Reports" ? (sectionReady.reports ? <Reports data={data} /> : <Splash text="Loading Reports..." />) :
+            page === "Settings" ? (sectionReady.admin ? <Settings data={data} config={config} saveSettings={saveSettings} exportBackup={exportBackup} realMode={realMode} /> : <Splash text="Loading Admin..." />) :
             page === "HR Document Generator" ? <AIGenerator data={data} addRecord={addRecord} realMode={realMode} /> :
-            page === "Documents" ? <DocumentsModule data={data} setModal={setModal} deleteRecord={deleteRecord} uploadDocument={uploadDocument} downloadDocument={downloadDocument} realMode={realMode} /> :
-            hrPages.includes(page) ? <Module page={page} data={data} setModal={setModal} patchRecord={patchRecord} deleteRecord={deleteRecord} addRecord={addRecord} createInvoiceFromEngagements={createInvoiceFromEngagements} /> :
-            governmentPages.includes(page) ? <GovernmentCenter page={page} governmentData={governmentData} updateGovernmentData={updateGovernmentData} saveGovernmentOpportunity={saveGovernmentOpportunity} deleteGovernmentOpportunity={deleteGovernmentOpportunity} setPage={setPage} /> :
-            operationsPages.includes(page) ? <OperationsCenter page={page} runAutomations={runAutomations} /> :
-            aiWorkspacePages.includes(page) ? <AIWorkspacePage page={page} /> :
-            adminPages.includes(page) ? <AdminPage page={page} realMode={realMode} /> :
-            <HomeDashboard data={data} metrics={metrics} governmentData={governmentData} fundingData={fundingData} realMode={realMode} runAutomations={runAutomations} setPage={setPage} />}
+            page === "Documents" ? (sectionReady.hr ? <DocumentsModule data={data} setModal={setModal} deleteRecord={deleteRecord} uploadDocument={uploadDocument} downloadDocument={downloadDocument} realMode={realMode} /> : <Splash text="Loading HR Consulting..." />) :
+            hrPages.includes(page) ? (sectionReady.hr ? <Module page={page} data={data} setModal={setModal} patchRecord={patchRecord} deleteRecord={deleteRecord} addRecord={addRecord} createInvoiceFromEngagements={createInvoiceFromEngagements} /> : <Splash text="Loading HR Consulting..." />) :
+            governmentPages.includes(page) ? (sectionReady.government ? <GovernmentCenter page={page} governmentData={governmentData} updateGovernmentData={updateGovernmentData} saveGovernmentOpportunity={saveGovernmentOpportunity} deleteGovernmentOpportunity={deleteGovernmentOpportunity} setPage={setPage} /> : <Splash text="Loading Government..." />) :
+            operationsPages.includes(page) ? (sectionReady.operations ? <OperationsCenter page={page} runAutomations={runAutomations} /> : <Splash text="Loading Operations..." />) :
+            aiWorkspacePages.includes(page) ? (sectionReady.aiWorkspace ? <AIWorkspacePage page={page} /> : <Splash text="Loading AI Workspace..." />) :
+            veeAiPages.includes(page) ? (sectionReady.veeAi ? <VeeAIPage /> : <Splash text="Loading Vee AI..." />) :
+            adminPages.includes(page) ? (sectionReady.admin ? <AdminPage page={page} realMode={realMode} /> : <Splash text="Loading Admin..." />) :
+            (sectionReady.home ? <HomeDashboard data={data} metrics={metrics} governmentData={governmentData} fundingData={fundingData} realMode={realMode} runAutomations={runAutomations} setPage={setPage} /> : <Splash text="Loading Home..." />)}
         </section>
       </main>
-      {modal && <RecordModal modal={modal} data={data} onSave={saveModal} onClose={() => setModal(null)} />}
+      {modal && typeof RecordModal === "function" && <RecordModal modal={modal} data={data} onSave={saveModal} onClose={() => setModal(null)} />}
     </div>
   );
 }
@@ -1352,7 +1781,7 @@ function AuthGate({ config, storeConfig, supabaseClient, setDemoMode, error, set
           <div className="actions">
             <button className="btn" onClick={submit}>{mode === "signin" ? "Sign in" : "Create account"}</button>
             <button className="btn secondary" onClick={() => setMode(mode === "signin" ? "signup" : "signin")}>{mode === "signin" ? "Need an account?" : "Have an account?"}</button>
-            <button className="btn secondary" onClick={() => setDemoMode(true)}>Continue demo</button>
+            <button className="btn secondary" onClick={() => setDemoMode(true)}>Continue locally</button>
           </div>
         </div>
       </div>
@@ -1360,66 +1789,47 @@ function AuthGate({ config, storeConfig, supabaseClient, setDemoMode, error, set
   );
 }
 
-function HomeDashboard({ data, metrics, governmentData, fundingData, realMode, runAutomations, setPage }) {
-  const govStats = getGovernmentStats(governmentData);
-  const fundingStats = getFundingStats(fundingData);
-  const universalOpportunities = getUniversalOpportunities(data, governmentData, fundingData);
-  const universalStats = getUniversalOpportunityStats(universalOpportunities);
-  return (
-    <>
-      <Title
-        title="Good morning, Valicia."
-        subtitle={realMode ? "What should you focus on today? Supabase is connected and your command center is secured." : "What should you focus on today? Demo mode is using mock and local data."}
-        action={<button className="btn" onClick={runAutomations}>Run automations</button>}
-      />
-      <div className="chief-grid">
-        <FocusCard title="Highest Value Actions" items={operationsMock.highestValueActions} action="Open tasks" onAction={() => setPage("Tasks")} />
-        <FocusCard title="All Opportunities" items={[
-          { title: `${universalStats.total} total opportunities`, detail: `${amount(universalStats.pipelineValue)} estimated total value`, status: "Universal" },
-          { title: `${universalStats.highFit} high-fit opportunities`, detail: "Fit score of 80% or higher.", status: "High fit" },
-          { title: `${universalStats.dueSoon} due soon`, detail: `${universalStats.active} active opportunities still moving.`, status: "Focus" }
-        ]} action="Open engine" onAction={() => setPage("Universal Opportunities")} />
-        <FocusCard title="Government Opportunities" items={[
-          { title: `${govStats.opportunities} opportunities`, detail: `${amount(govStats.pipelineValue)} total pipeline value`, status: "Pipeline" },
-          { title: `${govStats.awaitingResponses} awaiting response`, detail: "Subcontractor outreach needs attention.", status: "Outreach" },
-          { title: `${govStats.followUpsDue} follow-up(s) due`, detail: "Includes overdue and due-today reminders.", status: "Reminder" },
-          { title: `${govStats.deadlinesApproaching} deadlines approaching`, detail: "Due within the next 14 days.", status: "Deadline" },
-          { title: `${govStats.contractsWon} won / ${govStats.contractsLost} lost`, detail: `${govStats.winRate}% win rate and ${amount(govStats.totalAwardedValue)} awarded.`, status: "Awards" }
-        ]} action="Review opportunities" onAction={() => setPage("Opportunities")} />
-        <FocusCard title="HR Consulting" items={[
-          { title: `${metrics.activeClients} active clients`, detail: `${metrics.openCases} open cases and ${metrics.openInvestigations} active investigations`, status: "Client work" },
-          { title: `${metrics.billableHours} billable hours tracked`, detail: "Review uninvoiced engagements before month-end.", status: "Billing" }
-        ]} action="Open clients" onAction={() => setPage("Clients")} />
-        <FocusCard title="Revenue" items={[
-          { title: amount(metrics.monthlyRevenue), detail: "HR consulting revenue recorded this month.", status: "Collected" },
-          { title: amount(metrics.outstanding), detail: "Pending invoices across consulting work.", status: metrics.overdue ? `${metrics.overdue} overdue` : "On track" }
-        ]} action="Open revenue" onAction={() => setPage("Revenue")} />
-        <FocusCard title="Funding & Grants" items={[
-          { title: `${fundingStats.newOpportunities} new opportunities`, detail: `${amount(fundingStats.totalPotentialFunding)} total potential funding`, status: "Funding" },
-          { title: `${fundingStats.deadlinesDueSoon} deadlines due soon`, detail: "Due within the next 14 days.", status: "Deadline" },
-          { title: `${fundingStats.draftsInProgress} drafts in progress`, detail: "Applications being reviewed or drafted.", status: "Drafting" }
-        ]} action="Open funding" onAction={() => setPage("Funding Opportunities")} />
-        <FocusCard title="Automations" items={operationsMock.automations} action="Check workflow health" onAction={() => setPage("Workflow Health")} />
-        <FocusCard title="Upcoming Deadlines" items={operationsMock.deadlines.map(item => ({ title: item.title, detail: item.date, status: item.type }))} action="Open calendar" onAction={() => setPage("Calendar/Deadlines")} />
-        <div className="card span-two">
-          <div className="panel-head"><h3>Recent Activity</h3><button className="btn secondary" onClick={() => setPage("Logs")}>View logs</button></div>
-          <Activity rows={data.activity_logs} />
-        </div>
-      </div>
-    </>
-  );
-}
-
 function RevenueCenter({ metrics, fundingData, governmentData, data, setPage }) {
   const [active, setActive] = useState("All");
   const fundingStats = getFundingStats(fundingData);
   const govStats = getGovernmentStats(governmentData);
-  const universalOpportunities = getUniversalOpportunities(data, governmentData, fundingData);
+  const productPipeline = loadProductPipeline();
+  const universalOpportunities = getUniversalOpportunities(data, governmentData, fundingData, productPipeline);
   const universalStats = getUniversalOpportunityStats(universalOpportunities);
-  const revenueChannelsWithGovernment = revenueChannels.map(channel => channel.name === "Government Pipeline"
-    ? { ...channel, month: govStats.totalAwardedValue, pipeline: govStats.pipelineValue, recent: `${govStats.contractsWon} contract(s) won` }
-    : channel
-  );
+  const revenueChannelsWithGovernment = [
+    {
+      name: "HR Consulting",
+      today: data.invoices.filter(item => item.status === "Paid" && item.payment_date === today).reduce((sum, item) => sum + Number(item.total || 0), 0),
+      month: metrics.monthlyRevenue,
+      pending: metrics.outstanding,
+      pipeline: data.clients.filter(client => ["Lead", "Active"].includes(client.status)).reduce((sum, client) => sum + Number(client.monthly_retainer_amount || 0) * 12, 0),
+      recent: data.clients.length ? `${data.clients.length} real client record(s)` : "No clients yet"
+    },
+    {
+      name: "Government Pipeline",
+      today: 0,
+      month: govStats.totalAwardedValue,
+      pending: 0,
+      pipeline: govStats.pipelineValue,
+      recent: governmentData.opportunities.length ? `${governmentData.opportunities.length} real opportunity record(s)` : "No opportunities yet"
+    },
+    {
+      name: "Funding & Grants",
+      today: 0,
+      month: 0,
+      pending: 0,
+      pipeline: fundingStats.totalPotentialFunding,
+      recent: fundingData.opportunities.length ? `${fundingData.opportunities.length} real funding record(s)` : "No funding records yet"
+    },
+    {
+      name: "Product Pipeline",
+      today: 0,
+      month: 0,
+      pending: 0,
+      pipeline: productPipeline.reduce((sum, item) => sum + Number(item.estimatedProfit || 0), 0),
+      recent: productPipeline.length ? `${productPipeline.length} saved product idea(s)` : "No saved product ideas yet"
+    }
+  ];
   const selected = active === "All" ? revenueChannelsWithGovernment : revenueChannelsWithGovernment.filter(channel => channel.name === active);
   const totals = revenueChannelsWithGovernment.reduce((acc, channel) => ({
     today: acc.today + channel.today,
@@ -1433,9 +1843,9 @@ function RevenueCenter({ metrics, fundingData, governmentData, data, setPage }) 
       <Title title="Revenue" subtitle="One place to scan digital products, HR consulting, invoices, and pipeline value." />
       <div className="grid metrics">
         <Metric label="Today's revenue" value={amount(totals.today)} />
-        <Metric label="Monthly revenue" value={amount(totals.month + metrics.monthlyRevenue)} />
-        <Metric label="Pending invoices" value={amount(totals.pending + metrics.outstanding)} />
-        <Metric label="Pipeline value" value={amount(totals.pipeline + fundingStats.totalPotentialFunding)} />
+        <Metric label="Monthly revenue" value={amount(totals.month)} />
+        <Metric label="Pending invoices" value={amount(totals.pending)} />
+        <Metric label="Pipeline value" value={amount(totals.pipeline)} />
       </div>
       <div className="card">
         <div className="panel-head"><h3>Universal Opportunity Engine</h3><button className="btn" onClick={() => setPage("Universal Opportunities")}>Open engine</button></div>
@@ -1470,11 +1880,382 @@ function RevenueCenter({ metrics, fundingData, governmentData, data, setPage }) 
         </div>)}
       </div>
       <div className="card">
-        <div className="panel-head"><h3>Recent Sales</h3><span className="mode">Mock data</span></div>
-        <div className="activity">{operationsMock.recentSales.map(item => <div key={`${item.source}-${item.item}`}><strong>{item.source}: {item.amount}</strong><span className="muted">{item.item} - {item.date}</span></div>)}</div>
+        <div className="panel-head"><h3>Recent Sales</h3><span className="mode">Real records only</span></div>
+        <div className="activity">
+          {data.invoices.filter(item => item.status === "Paid").slice(0, 6).map(item => <div key={item.id}><strong>{item.invoice_number}: {amount(item.total)}</strong><span className="muted">{clientName(data, item.client_id)} - {item.payment_date || item.invoice_date || "No date"}</span></div>)}
+          {!data.invoices.filter(item => item.status === "Paid").length && <p className="muted">No paid invoice records yet. Add a real invoice and mark it paid to see revenue activity.</p>}
+        </div>
       </div>
     </>
   );
+}
+
+function MakeableProductTrendFinder() {
+  const [filters, setFilters] = useState({ equipment: "All", recommendation: "All", category: "All", source: "All", profit: "All", time: "All" });
+  const [pipeline, setPipeline] = useState(loadProductPipeline);
+  const [selectedOutput, setSelectedOutput] = useState(null);
+  const scannedTrends = useMemo(getNormalizedProductTrends, []);
+  const evaluatedTrends = useMemo(() => scannedTrends.map(evaluateProductTrend).sort((a, b) => b.score - a.score), [scannedTrends]);
+  const accepted = evaluatedTrends.filter(item => item.canMake && item.recommendation !== "REJECT");
+  const rejected = evaluatedTrends.filter(item => !item.canMake || item.recommendation === "REJECT");
+  const visible = accepted.filter(item => matchesProductTrendFilters(item, filters));
+  const dashboard = getProductTrendDashboard(evaluatedTrends, accepted, rejected);
+  const sourceCounts = group(evaluatedTrends, "source");
+  const filterOptions = getProductTrendFilterOptions(evaluatedTrends);
+
+  const updateFilter = (key, value) => setFilters({ ...filters, [key]: value });
+  const savePipeline = next => {
+    setPipeline(next);
+    localStorage.setItem(productPipelineKey, JSON.stringify(next));
+  };
+  const addToPipeline = trend => {
+    const exists = pipeline.some(item => item.sourceTrendId === trend.id);
+    if (exists) return;
+    // TODO: Persist product pipeline records to Supabase or Airtable once the production data store is selected.
+    savePipeline([...pipeline, {
+      id: uid("maker-pipeline"),
+      sourceTrendId: trend.id,
+      productName: trend.trendName,
+      category: trend.category,
+      equipment: trend.requiredEquipment,
+      estimatedProfit: productProfit(trend),
+      score: trend.score,
+      status: "Idea"
+    }]);
+  };
+  const updatePipelineStatus = (id, status) => savePipeline(pipeline.map(item => item.id === id ? { ...item, status } : item));
+  const openOutput = (trend, outputType) => setSelectedOutput({ trend, outputType, output: generateProductTrendOutput(trend, outputType) });
+
+  return (
+    <>
+      <Title title="Makeable Product Trend Finder" subtitle="AI-generated product suggestions filtered against Valicia's actual production equipment. These are ideas, not saved business records." />
+      <div className="grid metrics">
+        <Metric label="Total trends scanned" value={dashboard.total} />
+        <Metric label="Makeable products" value={dashboard.makeable} />
+        <Metric label="Rejected products" value={dashboard.rejected} />
+        <Metric label="High-priority ideas" value={dashboard.highPriority} />
+        <Metric label="Average profit" value={amount(dashboard.averageProfit)} />
+        <Metric label="Last checked" value={dashboard.lastChecked} />
+      </div>
+
+      <div className="grid two-col">
+        <div className="card">
+          <div className="panel-head"><h3>Trend Source Adapter Registry</h3><span className="mode">AI-generated suggestions</span></div>
+          <div className="source-grid">
+            {mockTrendSourceAdapters.map(source => <div key={source.id}>
+              <strong>{source.label}</strong>
+              <span className="badge">{source.status}</span>
+              <small>{sourceCounts[source.label] || 0} normalized trend(s)</small>
+            </div>)}
+          </div>
+          <p className="muted trend-note">Sources are currently disconnected. Suggestions are generated locally until live scraping/API adapters, credentials, rate limits, and persistence rules are approved.</p>
+        </div>
+        <div className="card">
+          <div className="panel-head"><h3>Local Product Pipeline</h3><span className="badge">{pipeline.length} saved</span></div>
+          <div className="table-wrap compact-table">
+            <table>
+              <thead><tr><th>Product</th><th>Profit</th><th>Score</th><th>Status</th></tr></thead>
+              <tbody>
+                {pipeline.map(item => <tr key={item.id}>
+                  <td><strong>{item.productName}</strong><span className="table-subline">{item.equipment.join(", ")}</span></td>
+                  <td>{amount(item.estimatedProfit)}</td>
+                  <td>{item.score}</td>
+                  <td><select value={item.status} onChange={e => updatePipelineStatus(item.id, e.target.value)}>{pipelineStatuses.map(status => <option key={status}>{status}</option>)}</select></td>
+                </tr>)}
+                {!pipeline.length && <tr><td colSpan="4" className="muted">Saved product ideas will appear here after you add an AI-generated suggestion to the local product pipeline.</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div className="card product-filters">
+        <div className="panel-head"><h3>Filters</h3><button className="btn secondary" onClick={() => setFilters({ equipment: "All", recommendation: "All", category: "All", source: "All", profit: "All", time: "All" })}>Reset</button></div>
+        <div className="toolbar filter-bar">
+          <ProductFilter label="Equipment" value={filters.equipment} options={["All", ...filterOptions.equipment]} onChange={value => updateFilter("equipment", value)} />
+          <ProductFilter label="Recommendation" value={filters.recommendation} options={["All", "HIGH PRIORITY", "TEST THIS WEEKEND", "WATCH"]} onChange={value => updateFilter("recommendation", value)} />
+          <ProductFilter label="Category" value={filters.category} options={["All", ...filterOptions.categories]} onChange={value => updateFilter("category", value)} />
+          <ProductFilter label="Source" value={filters.source} options={["All", ...filterOptions.sources]} onChange={value => updateFilter("source", value)} />
+          <ProductFilter label="Profit" value={filters.profit} options={["All", "$0-$10", "$10-$20", "$20+"]} onChange={value => updateFilter("profit", value)} />
+          <ProductFilter label="Time" value={filters.time} options={["All", "Under 15 min", "15-45 min", "45+ min"]} onChange={value => updateFilter("time", value)} />
+        </div>
+      </div>
+
+      <div className="grid two-col">
+        <div className="grid">
+          {visible.map(trend => <ProductOpportunityCard key={trend.id} trend={trend} inPipeline={pipeline.some(item => item.sourceTrendId === trend.id)} addToPipeline={addToPipeline} openOutput={openOutput} />)}
+          {!visible.length && <div className="card"><p className="muted">No makeable products match the current filters.</p></div>}
+        </div>
+        <div className="grid">
+          <div className="card">
+            <div className="panel-head"><h3>Rejected Trends</h3><span className="badge danger">{rejected.length} rejected</span></div>
+            <details open={false}>
+              <summary>Show rejected ideas and reasons</summary>
+              <div className="activity rejected-list">
+                {rejected.map(item => <div key={item.id}><strong>{item.trendName}</strong><span className="muted">{item.rejectionReason || "Rejected by revenue reality filter."}</span><span className="badge danger">{item.source}</span></div>)}
+              </div>
+            </details>
+          </div>
+          <div className="card">
+            <h3>Revenue Reality Rules</h3>
+            <div className="check-list">
+              {["Reject products that need unavailable equipment.", "Reject tests over $50 in material cost.", "Downgrade long production times and low margins.", "Downgrade unclear demand or expensive specialty materials.", "Prioritize fast tests that fit existing tools."].map(rule => <label key={rule}><input type="checkbox" checked readOnly /> {rule}</label>)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {selectedOutput && <GeneratedProductOutputModal item={selectedOutput} onClose={() => setSelectedOutput(null)} />}
+    </>
+  );
+}
+
+function ProductFilter({ label: labelText, value, options, onChange }) {
+  return <label>{labelText}<select value={value} onChange={e => onChange(e.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select></label>;
+}
+
+function ProductOpportunityCard({ trend, inPipeline, addToPipeline, openOutput }) {
+  const profit = productProfit(trend);
+  return <div className="card product-card">
+    <div className="panel-head">
+      <div><h3>{trend.trendName}</h3><p className="muted">{trend.shortDescription}</p></div>
+      <span className={`badge ${trend.recommendation === "HIGH PRIORITY" ? "success" : trend.recommendation === "TEST THIS WEEKEND" ? "warn" : ""}`}>{trend.recommendation}</span>
+    </div>
+    <div className="product-score"><strong>{trend.score}</strong><span>Trend score</span></div>
+    <div className="mini-metrics">
+      <span><b>{amount(trend.estimatedMaterialCost)}</b><small>material cost</small></span>
+      <span><b>{amount(trend.estimatedSellPrice)}</b><small>sell price</small></span>
+      <span><b>{amount(profit)}</b><small>estimated profit</small></span>
+      <span><b>{trend.estimatedProductionTime}m</b><small>production time</small></span>
+    </div>
+    <InfoBlock title="Equipment needed" text={trend.requiredEquipment.join(", ")} />
+    <InfoBlock title="Materials needed" text={trend.requiredMaterials.join(", ")} />
+    <InfoBlock title="Why this is makeable" text={`Fits existing ${trend.requiredEquipment.join(" + ")} capability with test cost under $50 and no blocked production process.`} />
+    <InfoList title="Keywords" items={trend.keywords} />
+    <InfoBlock title="Next action" text={nextActionForTrend(trend)} />
+    <div className="actions">
+      <button className="btn" disabled={inPipeline} onClick={() => addToPipeline(trend)}>{inPipeline ? "Added to Pipeline" : "Add to Product Pipeline"}</button>
+      <button className="btn secondary" onClick={() => openOutput(trend, "listing")}>Generate Listing Draft</button>
+      <button className="btn secondary" onClick={() => openOutput(trend, "design")}>Generate Design Prompt</button>
+      <button className="btn secondary" onClick={() => openOutput(trend, "checklist")}>Save for Later</button>
+    </div>
+  </div>;
+}
+
+function GeneratedProductOutputModal({ item, onClose }) {
+  const { trend, outputType, output } = item;
+  return <div className="modal-backdrop">
+    <div className="modal generated-output">
+      <div className="panel-head"><h3>{output.title}</h3><button className="btn secondary" onClick={onClose}>Close</button></div>
+      <p className="muted">{trend.trendName} - AI-generated suggestion, not a saved business record. TODO: Replace deterministic helpers with Claude/OpenAI-generated drafts when API integration is approved.</p>
+      {outputType === "listing" && <>
+        <InfoBlock title="SEO title" text={output.seoTitle} />
+        <InfoBlock title="Product description" text={output.description} />
+        <InfoList title="13 Etsy tags" items={output.tags} />
+        <InfoList title="Materials" items={output.materials} />
+        <InfoBlock title="Pricing suggestion" text={output.pricingSuggestion} />
+      </>}
+      {outputType === "design" && <>
+        <InfoBlock title="Design style" text={output.designStyle} />
+        <InfoBlock title="Target customer" text={output.targetCustomer} />
+        <InfoBlock title="Colors" text={output.colors} />
+        <InfoList title="Wording ideas" items={output.wordingIdeas} />
+        <InfoBlock title="Mockup suggestion" text={output.mockupSuggestion} />
+      </>}
+      {outputType === "checklist" && <>
+        <InfoList title="Materials" items={output.materials} />
+        <InfoList title="Equipment" items={output.equipment} />
+        <InfoList title="Steps" items={output.steps} />
+        <InfoBlock title="Quality check" text={output.qualityCheck} />
+        <InfoBlock title="Packaging note" text={output.packagingNote} />
+      </>}
+    </div>
+  </div>;
+}
+
+function trendSeed(id, source, trendName, productType, category, shortDescription, keywords, observedSignal, demandSignal, seasonality, estimatedCompetition, estimatedSellPrice, estimatedMaterialCost, estimatedProductionTime, requiredEquipment, requiredMaterials) {
+  return {
+    id,
+    source,
+    trendName,
+    productType,
+    category,
+    shortDescription,
+    keywords,
+    observedSignal,
+    demandSignal,
+    seasonality,
+    estimatedCompetition,
+    estimatedSellPrice,
+    estimatedMaterialCost,
+    estimatedProductionTime,
+    requiredEquipment,
+    requiredMaterials,
+    canMake: false,
+    rejectionReason: "",
+    score: 0,
+    recommendation: "WATCH"
+  };
+}
+
+function getNormalizedProductTrends() {
+  // TODO: Replace suggestion adapter calls with live source fetchers after anti-bot, API, and caching rules are defined.
+  return mockTrendSourceAdapters.flatMap(adapter => adapter.fetchTrends().map(item => ({ ...item, source: adapter.label })));
+}
+
+function evaluateProductTrend(trend) {
+  const capability = evaluateMakerCapability(trend);
+  const revenueReality = evaluateRevenueReality(trend);
+  const score = capability.canMake ? scoreProductTrend(trend, revenueReality) : 0;
+  const recommendation = getProductRecommendation(score, capability.canMake, revenueReality.reject);
+  return {
+    ...trend,
+    canMake: capability.canMake && !revenueReality.reject,
+    rejectionReason: capability.rejectionReason || revenueReality.rejectionReason,
+    score,
+    recommendation
+  };
+}
+
+function evaluateMakerCapability(trend) {
+  const normalizedEquipment = trend.requiredEquipment.map(item => item.toLowerCase());
+  const available = makerCapabilities.equipment.map(item => item.toLowerCase());
+  const blockedEquipment = makerCapabilities.blockedEquipment.map(item => item.toLowerCase());
+  const blockedProcesses = makerCapabilities.blockedProcesses.map(item => item.toLowerCase());
+  const unavailableBlocked = normalizedEquipment.find(item => blockedEquipment.includes(item) || blockedProcesses.some(process => item.includes(process)));
+  if (unavailableBlocked) return { canMake: false, rejectionReason: `${titleCase(unavailableBlocked)} is not part of current production capabilities.` };
+  const missingEquipment = trend.requiredEquipment.find(item => !available.includes(item.toLowerCase()));
+  if (missingEquipment) return { canMake: false, rejectionReason: `${missingEquipment} not available.` };
+  return { canMake: true, rejectionReason: "" };
+}
+
+function evaluateRevenueReality(trend) {
+  const profit = productProfit(trend);
+  const margin = trend.estimatedSellPrice ? profit / trend.estimatedSellPrice : 0;
+  if (trend.estimatedMaterialCost > 50) return { reject: true, penalty: 30, rejectionReason: "Test cost is over $50." };
+  if (String(trend.demandSignal).toLowerCase() === "unclear") return { reject: true, penalty: 25, rejectionReason: "Demand is unclear for a practical test." };
+  let penalty = 0;
+  if (margin < 0.45) penalty += 20;
+  if (trend.estimatedProductionTime > 90) penalty += 12;
+  if (trend.estimatedCompetition === "High") penalty += 8;
+  return { reject: false, penalty, rejectionReason: "" };
+}
+
+function scoreProductTrend(trend, revenueReality) {
+  const profit = productProfit(trend);
+  const margin = trend.estimatedSellPrice ? profit / trend.estimatedSellPrice : 0;
+  const demand = trend.demandSignal === "clear" ? 18 : 8;
+  const competition = trend.estimatedCompetition === "Low" ? 12 : trend.estimatedCompetition === "Medium" ? 9 : 5;
+  const profitMargin = margin >= 0.65 ? 16 : margin >= 0.5 ? 12 : 6;
+  const speed = trend.estimatedProductionTime <= 15 ? 12 : trend.estimatedProductionTime <= 45 ? 9 : 4;
+  const materialCost = trend.estimatedMaterialCost <= 8 ? 10 : trend.estimatedMaterialCost <= 15 ? 7 : 4;
+  const season = /back to school|graduation|holiday|fall|winter|summer/i.test(trend.seasonality) ? 8 : 5;
+  const ease = trend.estimatedMaterialCost <= 15 && trend.estimatedProductionTime <= 45 ? 10 : 5;
+  const repeatability = trend.productType.match(/sweatshirt|desk mat|glass can|phone stand|sign|cake topper/i) ? 7 : 4;
+  const equipmentFit = trend.requiredEquipment.every(item => makerCapabilities.equipment.includes(item)) ? 9 : 0;
+  return Math.max(0, Math.min(100, Math.round(demand + competition + profitMargin + speed + materialCost + season + ease + repeatability + equipmentFit - revenueReality.penalty)));
+}
+
+function getProductRecommendation(score, canMake, reject) {
+  if (!canMake || reject) return "REJECT";
+  if (score >= 82) return "HIGH PRIORITY";
+  if (score >= 68) return "TEST THIS WEEKEND";
+  return "WATCH";
+}
+
+function productProfit(trend) {
+  return Number(trend.estimatedSellPrice || 0) - Number(trend.estimatedMaterialCost || 0);
+}
+
+function matchesProductTrendFilters(trend, filters) {
+  const profit = productProfit(trend);
+  if (filters.equipment !== "All" && !trend.requiredEquipment.includes(filters.equipment)) return false;
+  if (filters.recommendation !== "All" && trend.recommendation !== filters.recommendation) return false;
+  if (filters.category !== "All" && trend.category !== filters.category) return false;
+  if (filters.source !== "All" && trend.source !== filters.source) return false;
+  if (filters.profit === "$0-$10" && (profit < 0 || profit > 10)) return false;
+  if (filters.profit === "$10-$20" && (profit < 10 || profit > 20)) return false;
+  if (filters.profit === "$20+" && profit < 20) return false;
+  if (filters.time === "Under 15 min" && trend.estimatedProductionTime >= 15) return false;
+  if (filters.time === "15-45 min" && (trend.estimatedProductionTime < 15 || trend.estimatedProductionTime > 45)) return false;
+  if (filters.time === "45+ min" && trend.estimatedProductionTime <= 45) return false;
+  return true;
+}
+
+function getProductTrendDashboard(all, accepted, rejected) {
+  const averageProfit = accepted.length ? accepted.reduce((sum, item) => sum + productProfit(item), 0) / accepted.length : 0;
+  return {
+    total: all.length,
+    makeable: accepted.length,
+    rejected: rejected.length,
+    highPriority: accepted.filter(item => item.recommendation === "HIGH PRIORITY").length,
+    averageProfit,
+    lastChecked: currentDateTime()
+  };
+}
+
+function getProductTrendFilterOptions(trends) {
+  return {
+    equipment: uniqueSorted(trends.flatMap(item => item.requiredEquipment).filter(item => makerCapabilities.equipment.includes(item))),
+    categories: uniqueSorted(trends.map(item => item.category)),
+    sources: uniqueSorted(trends.map(item => item.source))
+  };
+}
+
+function uniqueSorted(items) {
+  return [...new Set(items.filter(Boolean))].sort();
+}
+
+function loadProductPipeline() {
+  try {
+    return JSON.parse(localStorage.getItem(productPipelineKey) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function nextActionForTrend(trend) {
+  if (trend.recommendation === "HIGH PRIORITY") return "Price one test batch, create one mockup, and list a limited run this week.";
+  if (trend.recommendation === "TEST THIS WEEKEND") return "Prototype one sample this weekend and compare production time against the estimate.";
+  return "Watch signals for another week and save supplier/material notes.";
+}
+
+function generateProductTrendOutput(trend, outputType) {
+  // TODO: Replace these deterministic helpers with Claude/OpenAI API calls for richer listing, design, and checklist output.
+  if (outputType === "listing") {
+    const tags = uniqueSorted([...trend.keywords, trend.productType, trend.category, "custom gift", "personalized gift", "small business", "made to order"]).slice(0, 13);
+    while (tags.length < 13) tags.push(`custom ${tags.length + 1}`);
+    return {
+      title: "Etsy Listing Draft",
+      seoTitle: `${trend.trendName} | Personalized ${trend.productType} | ${trend.seasonality} Gift`,
+      description: `Custom ${trend.productType.toLowerCase()} inspired by ${trend.trendName}. Designed for buyers searching for ${trend.keywords.slice(0, 3).join(", ")} with quick small-batch production and a polished handmade finish.`,
+      tags,
+      materials: trend.requiredMaterials,
+      pricingSuggestion: `Suggested test price: ${amount(trend.estimatedSellPrice)}. Estimated material cost: ${amount(trend.estimatedMaterialCost)}. Estimated gross profit before fees/labor: ${amount(productProfit(trend))}.`
+    };
+  }
+  if (outputType === "design") {
+    return {
+      title: "Design Prompt",
+      designStyle: `${trend.category} design with clean production-friendly details for ${trend.productType.toLowerCase()}.`,
+      targetCustomer: trend.category === "Apparel" ? "Office workers, HR teams, and gift buyers" : "Gift buyers looking for personalized, practical products",
+      colors: "Use two to four high-contrast colors that photograph well on mockups.",
+      wordingIdeas: [`Personalized ${trend.productType}`, trend.trendName.replace(/^Funny /, ""), `${trend.seasonality} edition`],
+      mockupSuggestion: `Photograph or mock up the ${trend.productType.toLowerCase()} on a bright neutral surface with one close detail shot.`
+    };
+  }
+  return {
+    title: "Production Checklist",
+    materials: trend.requiredMaterials,
+    equipment: trend.requiredEquipment,
+    steps: ["Confirm customer personalization and sizing.", "Prepare design file and production settings.", "Produce one sample or small batch.", "Inspect alignment, color, finish, and durability.", "Photograph mockup and record actual production time."],
+    qualityCheck: "Check edges, adhesion, color clarity, spelling, and surface cleanliness before packaging.",
+    packagingNote: "Package with a simple care card and protect surfaces from scuffs during shipping."
+  };
+}
+
+function titleCase(text) {
+  return String(text || "").replace(/\b\w/g, letter => letter.toUpperCase());
 }
 
 function Dashboard({ data, metrics, realMode, runAutomations }) {
@@ -1502,18 +2283,6 @@ function Dashboard({ data, metrics, realMode, runAutomations }) {
   );
 }
 
-const draftSections = [
-  "business summary",
-  "owner background",
-  "need statement",
-  "use of funds",
-  "community impact",
-  "project timeline",
-  "sustainability plan"
-];
-
-const submissionStatuses = ["not started", "reviewing", "drafting", "documents needed", "ready to submit", "submitted", "awarded", "denied"];
-
 function workflowStageForStatus(status = "") {
   const text = String(status).toLowerCase();
   if (["awarded", "won", "lost", "denied"].some(item => text.includes(item))) return "Award/Won/Lost";
@@ -1526,7 +2295,7 @@ function workflowStageForStatus(status = "") {
   return "Opportunity";
 }
 
-function getUniversalOpportunities(data, governmentData, fundingData) {
+function getUniversalOpportunities(data, governmentData, fundingData, productPipeline = []) {
   const government = governmentData.opportunities.map(item => ({
     id: `gov-${item.id}`,
     type: "Government Contract",
@@ -1569,19 +2338,20 @@ function getUniversalOpportunities(data, governmentData, fundingData) {
     notes: client.notes,
     workflow_stage: client.status === "Active" ? "Revenue" : "Opportunity"
   }));
-  const digital = revenueChannels.filter(channel => ["Etsy", "Gumroad", "Stan Store", "TikTok Shop future", "HR AI OS"].includes(channel.name)).map(channel => ({
-    id: `digital-${channel.name}`,
+  const productIdeas = Array.isArray(productPipeline) ? productPipeline : [];
+  const digital = productIdeas.map(item => ({
+    id: `digital-${item.id}`,
     type: "Digital Product Opportunity",
-    title: `${channel.name} growth opportunity`,
-    source: channel.name,
-    estimated_value: Number(channel.pipeline || 0),
-    fit_score: channel.pipeline > 1000 ? 80 : 62,
+    title: item.productName,
+    source: "Saved product pipeline",
+    estimated_value: Number(item.estimatedProfit || 0),
+    fit_score: Number(item.score || 0),
     deadline: "",
-    status: channel.name === "TikTok Shop future" ? "Opportunity" : "Revenue",
-    next_action: channel.name === "TikTok Shop future" ? "Define product listing and launch checklist" : "Review sales trend and optimize offer",
+    status: item.status,
+    next_action: "Validate this saved product idea with real demand and cost notes.",
     required_documents: ["Product description", "Pricing", "Launch assets"],
-    notes: channel.recent,
-    workflow_stage: channel.name === "TikTok Shop future" ? "Opportunity" : "Revenue"
+    notes: "Saved from AI-generated product suggestions.",
+    workflow_stage: workflowStageForStatus(item.status)
   }));
   const seeded = universalOpportunitySeed.map(item => ({ ...item, workflow_stage: workflowStageForStatus(item.status) }));
   return [...government, ...funding, ...hr, ...digital, ...seeded];
@@ -1601,10 +2371,6 @@ function getUniversalOpportunityStats(opportunities) {
   };
 }
 
-function getSelectedFunding(fundingData) {
-  return fundingData.opportunities.find(item => item.id === fundingData.selectedFundingId) || fundingData.opportunities[0];
-}
-
 function getFundingStats(fundingData) {
   const dueSoon = fundingData.opportunities.filter(item => {
     const days = daysUntil(item.deadline);
@@ -1616,159 +2382,6 @@ function getFundingStats(fundingData) {
     draftsInProgress: fundingData.opportunities.filter(item => ["drafting", "documents needed", "ready to submit"].includes(item.status)).length,
     totalPotentialFunding: fundingData.opportunities.reduce((sum, item) => sum + Number(item.amount_available || 0), 0)
   };
-}
-
-function generateFundingDraft(opportunity, section) {
-  const businessName = "V Solutions LLC";
-  const templates = {
-    "business summary": `${businessName} is an HR consulting and AI-enabled operations company led by Valicia Davis, MBA, PHR. The business provides HR compliance support, employee relations guidance, workplace investigation support, and practical digital tools for small businesses.`,
-    "owner background": "Valicia Davis brings HR leadership, compliance knowledge, business operations experience, and a practical understanding of the needs facing small employers. Her background supports both direct consulting delivery and scalable digital product development.",
-    "need statement": `Funding is needed to expand delivery capacity, improve systems, and accelerate growth for ${opportunity.title}. The support would help convert current demand into stronger service delivery, better documentation, and more consistent revenue operations.`,
-    "use of funds": opportunity.budget_narrative?.use_of_funds || "Funds will be used for technology, implementation support, marketing, documentation, and capacity-building activities.",
-    "community impact": "This project will help small businesses access clearer HR compliance tools, reduce workplace risk, and support more stable employment practices in the community.",
-    "project timeline": "Month 1: finalize planning and vendor setup. Month 2: build or purchase required tools and documents. Month 3: launch improved workflows, marketing, and reporting. Month 4+: monitor outcomes and refine delivery.",
-    "sustainability plan": "The project will be sustained through recurring HR consulting revenue, digital product sales, improved workflow automation, and stronger public/private sector pipeline development."
-  };
-  return templates[section] || "";
-}
-
-function FundingCenter({ page, fundingData, updateFundingData, setPage }) {
-  const selectedFunding = getSelectedFunding(fundingData);
-  const selectFunding = id => updateFundingData({ ...fundingData, selectedFundingId: id });
-  const updateFunding = updates => updateFundingData({ ...fundingData, opportunities: fundingData.opportunities.map(item => item.id === selectedFunding.id ? { ...item, ...updates } : item) });
-  if (page === "Funding Opportunities") return <FundingOpportunities fundingData={fundingData} selectFunding={selectFunding} setPage={setPage} />;
-  if (page === "Eligibility Review") return <EligibilityReview opportunity={selectedFunding} setPage={setPage} />;
-  if (page === "Application Drafts") return <ApplicationDrafts opportunity={selectedFunding} updateFunding={updateFunding} />;
-  if (page === "Required Documents") return <FundingDocuments opportunity={selectedFunding} updateFunding={updateFunding} />;
-  if (page === "Budget & Narrative") return <BudgetNarrative opportunity={selectedFunding} updateFunding={updateFunding} />;
-  if (page === "Submission Tracker") return <SubmissionTracker fundingData={fundingData} updateFundingData={updateFundingData} />;
-  if (page === "Awards/Outcomes") return <FundingOutcomes fundingData={fundingData} />;
-  return <FundingOpportunities fundingData={fundingData} selectFunding={selectFunding} setPage={setPage} />;
-}
-
-function FundingOpportunities({ fundingData, selectFunding, setPage }) {
-  const stats = getFundingStats(fundingData);
-  const open = (item, nextPage) => {
-    selectFunding(item.id);
-    setPage(nextPage);
-  };
-  return (
-    <>
-      <Title title="Funding Opportunities" subtitle="Track grants, loans, pitch competitions, local funding, and federal/state programs." />
-      <div className="grid metrics">
-        <Metric label="New opportunities" value={stats.newOpportunities} />
-        <Metric label="Due soon" value={stats.deadlinesDueSoon} />
-        <Metric label="Drafts in progress" value={stats.draftsInProgress} />
-        <Metric label="Potential funding" value={amount(stats.totalPotentialFunding)} />
-      </div>
-      <div className="card">
-        <div className="table-wrap opportunities-table"><table><thead><tr>{["title", "funder", "funding_type", "amount_available", "deadline", "eligibility_status", "fit_score", "status", "next_action"].map(c => <th key={c}>{label(c)}</th>)}<th>Actions</th></tr></thead><tbody>
-          {fundingData.opportunities.map(item => <tr key={item.id}>
-            <td><strong>{item.title}</strong><span className="muted table-subline">{item.notes}</span></td><td>{item.funder}</td><td>{item.funding_type}</td><td>{amount(item.amount_available)}</td><td>{item.deadline}<br /><span className="muted">{dueLabel(item.deadline)}</span></td><td>{item.eligibility_status}</td><td><span className={Number(item.fit_score || 0) > 80 ? "badge success" : "badge"}>{item.fit_score}%</span></td><td><span className="badge warn">{item.status}</span></td><td>{item.next_action}</td>
-            <td><div className="row-actions"><button className="btn secondary" onClick={() => open(item, "Eligibility Review")}>Eligibility</button><button className="btn secondary" onClick={() => open(item, "Application Drafts")}>Draft</button><button className="btn secondary" onClick={() => open(item, "Required Documents")}>Docs</button><button className="btn secondary" onClick={() => open(item, "Submission Tracker")}>Track</button></div></td>
-          </tr>)}
-        </tbody></table></div>
-      </div>
-    </>
-  );
-}
-
-function EligibilityReview({ opportunity, setPage }) {
-  const review = opportunity.eligibility_review || {};
-  return (
-    <>
-      <Title title="Eligibility Review" subtitle={`${opportunity.title} - mock AI eligibility analysis.`} action={<button className="btn" onClick={() => setPage("Application Drafts")}>Start draft</button>} />
-      <div className="grid metrics">
-        <Metric label="Fit score" value={`${opportunity.fit_score}%`} />
-        <Metric label="Eligibility" value={opportunity.eligibility_status} />
-        <Metric label="Deadline" value={dueLabel(opportunity.deadline)} />
-        <Metric label="Amount" value={amount(opportunity.amount_available)} />
-      </div>
-      <div className="grid two-col">
-        <div className="card"><InfoBlock title="Eligibility match" text={review.eligibility_match} /><InfoBlock title="Recommended next action" text={review.recommended_next_action} /></div>
-        <div className="card"><InfoList title="Concerns" items={review.concerns} /><InfoList title="Missing documents" items={review.missing_documents} /></div>
-      </div>
-    </>
-  );
-}
-
-function ApplicationDrafts({ opportunity, updateFunding }) {
-  const drafts = opportunity.drafts || {};
-  const setDraft = (section, value) => updateFunding({ drafts: { ...drafts, [section]: value } });
-  const generate = section => setDraft(section, generateFundingDraft(opportunity, section));
-  return (
-    <>
-      <Title title="Application Drafts" subtitle={`Draft core responses for ${opportunity.title}.`} />
-      <div className="grid two-col">
-        {draftSections.map(section => <div className="card form" key={section}>
-          <div className="panel-head"><h3>{label(section)}</h3><button className="btn secondary" onClick={() => generate(section)}>Generate draft</button></div>
-          <label>Response<textarea value={drafts[section] || ""} onChange={e => setDraft(section, e.target.value)} /></label>
-        </div>)}
-      </div>
-    </>
-  );
-}
-
-function FundingDocuments({ opportunity, updateFunding }) {
-  const patchDoc = (name, updates) => updateFunding({ documents: opportunity.documents.map(doc => doc.name === name ? { ...doc, ...updates } : doc) });
-  return (
-    <>
-      <Title title="Required Documents" subtitle={`Document checklist for ${opportunity.title}.`} />
-      <div className="grid three-col">
-        {opportunity.documents.map(doc => <div className="card form" key={doc.name}>
-          <div className="panel-head"><h3>{label(doc.name)}</h3><span className={doc.status === "ready" ? "badge success" : "badge warn"}>{doc.status}</span></div>
-          <label>Status<select value={doc.status} onChange={e => patchDoc(doc.name, { status: e.target.value })}>{["needed", "requested", "ready", "not applicable"].map(status => <option key={status}>{status}</option>)}</select></label>
-          <label>Notes<textarea value={doc.notes || ""} onChange={e => patchDoc(doc.name, { notes: e.target.value })} /></label>
-        </div>)}
-      </div>
-    </>
-  );
-}
-
-function BudgetNarrative({ opportunity, updateFunding }) {
-  const budget = opportunity.budget_narrative || {};
-  const patchBudget = updates => updateFunding({ budget_narrative: { ...budget, ...updates } });
-  return (
-    <>
-      <Title title="Budget & Narrative" subtitle={`Budget story for ${opportunity.title}.`} />
-      <div className="grid two-col">
-        <div className="card form">
-          <label>Budget total<input type="number" value={budget.budget_total || 0} onChange={e => patchBudget({ budget_total: Number(e.target.value || 0) })} /></label>
-          <label>Use of funds<textarea value={budget.use_of_funds || ""} onChange={e => patchBudget({ use_of_funds: e.target.value })} /></label>
-        </div>
-        <div className="card form">
-          <label>Narrative<textarea value={budget.narrative || ""} onChange={e => patchBudget({ narrative: e.target.value })} /></label>
-        </div>
-      </div>
-    </>
-  );
-}
-
-function SubmissionTracker({ fundingData, updateFundingData }) {
-  const patchOutcome = (id, updates) => updateFundingData({ ...fundingData, opportunities: fundingData.opportunities.map(item => item.id === id ? { ...item, status: updates.status || item.status, outcome: { ...item.outcome, ...updates } } : item) });
-  return (
-    <>
-      <Title title="Submission Tracker" subtitle="Track each application from not started through awarded or denied." />
-      <div className="card">
-        <div className="table-wrap"><table><thead><tr>{["title", "funder", "deadline", "status", "submitted_date", "award_amount", "decision_date", "notes"].map(c => <th key={c}>{label(c)}</th>)}</tr></thead><tbody>
-          {fundingData.opportunities.map(item => <tr key={item.id}><td><strong>{item.title}</strong></td><td>{item.funder}</td><td>{item.deadline}</td><td><select value={item.outcome?.status || item.status} onChange={e => patchOutcome(item.id, { status: e.target.value })}>{submissionStatuses.map(status => <option key={status}>{status}</option>)}</select></td><td>{item.outcome?.submitted_date || ""}</td><td>{amount(item.outcome?.award_amount || 0)}</td><td>{item.outcome?.decision_date || ""}</td><td>{item.outcome?.notes || item.notes}</td></tr>)}
-        </tbody></table></div>
-      </div>
-    </>
-  );
-}
-
-function FundingOutcomes({ fundingData }) {
-  const outcomes = fundingData.opportunities.filter(item => ["submitted", "awarded", "denied"].includes(item.outcome?.status || item.status));
-  return (
-    <>
-      <Title title="Awards/Outcomes" subtitle="Submitted, awarded, and denied funding decisions." />
-      <div className="grid three-col">
-        {outcomes.map(item => <div className="card action-card" key={item.id}><span className="badge">{item.outcome?.status || item.status}</span><h3>{item.title}</h3><p>{item.funder}</p><p>{amount(item.outcome?.award_amount || item.amount_available)}</p></div>)}
-        {!outcomes.length && <div className="card"><p className="muted">No submitted, awarded, or denied funding outcomes yet.</p></div>}
-      </div>
-    </>
-  );
 }
 
 function UniversalOpportunityEngine({ data, governmentData, fundingData, setPage }) {
@@ -1836,167 +2449,6 @@ function UniversalOpportunityEngine({ data, governmentData, fundingData, setPage
   );
 }
 
-function Module({ page, data, setModal, patchRecord, deleteRecord, addRecord, createInvoiceFromEngagements }) {
-  const table = page.toLowerCase();
-  const rows = data[table] || [];
-  const [filter, setFilter] = useState("");
-  const visible = rows.filter(r => JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
-  const columns = {
-    clients: ["company_name", "industry", "status", "contract_end_date", "monthly_retainer_amount"],
-    contacts: ["name", "client_id", "role", "email", "primary_contact"],
-    invoices: ["invoice_number", "client_id", "invoice_date", "due_date", "status", "total"],
-    engagements: ["service_date", "client_id", "service_category", "hours_worked", "invoice_status"],
-    cases: ["case_number", "client_id", "case_type", "priority", "status"],
-    investigations: ["investigation_number", "client_id", "complainant", "respondent", "status"]
-  }[table] || [];
-  const active = ["clients", "contacts", "invoices", "engagements", "cases", "investigations"].includes(table);
-
-  return (
-    <>
-      <Title title={page} subtitle={active ? `Manage ${page.toLowerCase()} with authenticated CRUD.` : "Planned for a later phase."} action={active && <button className="btn" onClick={() => setModal({ table })}>Add {page.slice(0, -1)}</button>} />
-      <div className="card">
-        <div className="toolbar"><input placeholder={`Filter ${page.toLowerCase()}...`} value={filter} onChange={e => setFilter(e.target.value)} /></div>
-        {active ? <Table rows={visible} columns={columns} data={data} patchRecord={patchRecord} deleteRecord={deleteRecord} setModal={setModal} table={table} /> : <p className="muted">This module will be activated in the next phase.</p>}
-      </div>
-      {table === "clients" && visible[0] && <ClientDetail client={visible[0]} data={data} addRecord={addRecord} />}
-      {table === "invoices" && <InvoiceTools data={data} createInvoiceFromEngagements={createInvoiceFromEngagements} />}
-      {table === "cases" && visible[0] && <CaseDetail item={visible[0]} data={data} patchRecord={patchRecord} addRecord={addRecord} />}
-      {table === "investigations" && visible[0] && <InvestigationDetail item={visible[0]} data={data} patchRecord={patchRecord} addRecord={addRecord} />}
-    </>
-  );
-}
-
-function DocumentsModule({ data, setModal, deleteRecord, uploadDocument, downloadDocument, realMode }) {
-  const [filter, setFilter] = useState("");
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const visible = data.documents.filter(r => JSON.stringify(r).toLowerCase().includes(filter.toLowerCase()));
-  return (
-    <>
-      <Title title="Documents" subtitle={realMode ? "Upload files to private Supabase Storage." : "Demo upload records are stored locally without file contents."} action={<button className="btn" onClick={() => setUploadOpen(true)}>Upload document</button>} />
-      {uploadOpen && <DocumentUpload data={data} uploadDocument={uploadDocument} onClose={() => setUploadOpen(false)} />}
-      <div className="card">
-        <div className="toolbar"><input placeholder="Filter documents..." value={filter} onChange={e => setFilter(e.target.value)} /></div>
-        <Table rows={visible} columns={["title", "client_id", "document_type", "file_name", "expiration_date"]} data={data} patchRecord={() => {}} deleteRecord={deleteRecord} setModal={setModal} table="documents" downloadDocument={downloadDocument} />
-      </div>
-    </>
-  );
-}
-
-function DocumentUpload({ data, uploadDocument, onClose }) {
-  const [form, setForm] = useState({ document_type: "Contract", client_id: "" });
-  const [file, setFile] = useState(null);
-  const set = (key, value) => setForm({ ...form, [key]: value });
-  return (
-    <div className="card">
-      <div className="panel-head"><h3>Upload Document</h3><button className="btn secondary" onClick={onClose}>Close</button></div>
-      <div className="form form-grid">
-        <Form fields={fieldSets.documents} form={form} set={set} data={data} />
-        <label>File<input type="file" onChange={e => setFile(e.target.files[0])} /></label>
-      </div>
-      <div className="actions"><button className="btn" onClick={async () => { await uploadDocument(form, file); onClose(); }}>Upload</button></div>
-    </div>
-  );
-}
-
-function Table({ rows, columns, data, patchRecord, deleteRecord, setModal, table, downloadDocument }) {
-  return <div className="table-wrap"><table><thead><tr>{columns.map(c => <th key={c}>{label(c)}</th>)}<th>Actions</th></tr></thead><tbody>
-    {rows.map(row => <tr key={row.id}>{columns.map(c => <td key={c}>{cell(row, c, data)}</td>)}<td>
-      {table === "invoices" && row.status !== "Paid" && <button className="btn secondary" onClick={() => patchRecord(table, row.id, { status: "Paid", payment_date: today })}>Mark paid</button>}
-      {table === "invoices" && row.status === "Draft" && <button className="btn secondary" onClick={() => patchRecord(table, row.id, { status: "Sent" })}>Mark sent</button>}
-      {table === "documents" && <button className="btn secondary" onClick={() => downloadDocument(row)}>Download</button>}
-      {["clients", "contacts", "invoices", "engagements", "cases", "investigations"].includes(table) && <button className="btn secondary" onClick={() => setModal({ table, record: row })}>Edit</button>}
-      {["clients", "contacts", "invoices", "documents", "engagements", "cases", "investigations"].includes(table) && <button className="btn secondary" onClick={() => deleteRecord(table, row.id)}>Delete</button>}
-    </td></tr>)}
-    {!rows.length && <tr><td colSpan={columns.length + 1} className="muted">No records found.</td></tr>}
-  </tbody></table></div>;
-}
-
-function RecordModal({ modal, data, onSave, onClose }) {
-  const { table, record } = modal;
-  const fields = fieldSets[table];
-  const [form, setForm] = useState(record || {});
-  const set = (key, value) => setForm({ ...form, [key]: value });
-  return <div className="modal-backdrop"><div className="modal">
-    <h3>{record ? "Edit" : "Add"} {table.slice(0, -1)}</h3>
-    <div className="form form-grid"><Form fields={fields} form={form} set={set} data={data} /></div>
-    <div className="actions"><button className="btn secondary" onClick={onClose}>Cancel</button><button className="btn" onClick={() => onSave(table, form, record?.id)}>Save</button></div>
-  </div></div>;
-}
-
-function Form({ fields, form, set, data }) {
-  return <>{fields.map(([key, name, type = "text", options]) => <label key={key}>{name}
-    {type === "textarea" ? <textarea value={form[key] || ""} onChange={e => set(key, e.target.value)} /> :
-    type === "select" ? <select value={form[key] || options[0]} onChange={e => set(key, e.target.value)}>{options.map(o => <option key={o}>{o}</option>)}</select> :
-    type === "client" ? <select value={form[key] || ""} onChange={e => set(key, e.target.value)}><option value="">Select client</option>{data.clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}</select> :
-    type === "checkbox" ? <input type="checkbox" checked={!!form[key]} onChange={e => set(key, e.target.checked)} /> :
-    <input type={type} value={form[key] || ""} onChange={e => set(key, e.target.value)} />}
-  </label>)}</>;
-}
-
-function ClientDetail({ client, data, addRecord }) {
-  const [tab, setTab] = useState("Overview");
-  const tabs = ["Overview", "Contacts", "Engagements", "Cases", "Investigations", "Documents", "Invoices", "Notes"];
-  const related = {
-    Contacts: data.contacts.filter(r => r.client_id === client.id),
-    Engagements: data.engagements.filter(r => r.client_id === client.id),
-    Cases: data.cases.filter(r => r.client_id === client.id),
-    Investigations: data.investigations.filter(r => r.client_id === client.id),
-    Documents: data.documents.filter(r => r.client_id === client.id),
-    Invoices: data.invoices.filter(r => r.client_id === client.id),
-    Notes: data.notes.filter(r => r.parent_type === "client" && r.parent_id === client.id)
-  };
-  return <div className="card"><div className="panel-head"><h3>{client.company_name}</h3><span className={`badge ${statusClass(client.status)}`}>{client.status}</span></div>
-    <div className="tabs">{tabs.map(t => <button key={t} className={tab === t ? "active" : ""} onClick={() => setTab(t)}>{t}</button>)}</div>
-    {tab === "Overview" ? <p>{client.notes || "No overview notes yet."}</p> : tab === "Notes" ? <NotesPanel rows={related.Notes} parentType="client" parentId={client.id} addRecord={addRecord} /> : <pre>{JSON.stringify(related[tab], null, 2)}</pre>}
-  </div>;
-}
-
-function CaseDetail({ item, data, patchRecord, addRecord }) {
-  const notes = data.notes.filter(r => r.parent_type === "case" && r.parent_id === item.id);
-  return <div className="card">
-    <div className="panel-head"><h3>{item.case_number}</h3><span className={`badge ${statusClass(item.status)}`}>{item.status}</span></div>
-    <p><strong>Summary:</strong> {item.summary || "No summary yet."}</p>
-    <p><strong>Recommendation:</strong> {item.recommendation || "No recommendation drafted."}</p>
-    <div className="actions">
-      <button className="btn secondary" onClick={() => patchRecord("cases", item.id, { recommendation: aiDraft("HR recommendation memo", { tone: "Professional", summary: item.summary }) })}>Generate recommendation draft</button>
-      <button className="btn secondary" onClick={() => patchRecord("cases", item.id, { status: "Closed", date_closed: today })}>Close case</button>
-    </div>
-    <NotesPanel rows={notes} parentType="case" parentId={item.id} addRecord={addRecord} />
-  </div>;
-}
-
-function InvestigationDetail({ item, data, patchRecord, addRecord }) {
-  const interviews = data.investigation_interviews.filter(r => r.investigation_id === item.id);
-  const notes = data.notes.filter(r => r.parent_type === "investigation" && r.parent_id === item.id);
-  const [interview, setInterview] = useState({ interviewee_name: "", interview_date: today, interview_notes: "" });
-  const saveInterview = async () => {
-    if (!interview.interviewee_name.trim()) return;
-    await addRecord("investigation_interviews", { ...interview, investigation_id: item.id });
-    setInterview({ interviewee_name: "", interview_date: today, interview_notes: "" });
-  };
-  const printReport = () => printHtml(`Investigation ${item.investigation_number}`, investigationHtml(item, data));
-  const downloadReport = () => downloadText(`${item.investigation_number}-report.html`, investigationHtml(item, data), "text/html");
-  return <div className="card">
-    <div className="panel-head"><h3>{item.investigation_number}</h3><span className={`badge ${statusClass(item.status)}`}>{item.status}</span></div>
-    <p><strong>Complaint:</strong> {item.complaint_summary || "No complaint summary yet."}</p>
-    <p><strong>Final summary:</strong> {item.final_summary || "No final summary drafted."}</p>
-    <div className="actions">
-      <button className="btn secondary" onClick={() => patchRecord("investigations", item.id, { notes: aiDraft("Investigation interview questions", { tone: "Professional", summary: item.complaint_summary }) })}>Generate interview questions</button>
-      <button className="btn secondary" onClick={() => patchRecord("investigations", item.id, { final_summary: aiDraft("Investigation findings summary", { tone: "Executive", summary: item.complaint_summary }) })}>Draft investigation summary</button>
-      <button className="btn secondary" onClick={printReport}>Print report</button>
-      <button className="btn secondary" onClick={downloadReport}>Download report</button>
-    </div>
-    <div className="form form-grid">
-      <label>Interviewee<input value={interview.interviewee_name} onChange={e => setInterview({ ...interview, interviewee_name: e.target.value })} /></label>
-      <label>Interview date<input type="date" value={interview.interview_date} onChange={e => setInterview({ ...interview, interview_date: e.target.value })} /></label>
-      <label>Interview notes<textarea value={interview.interview_notes} onChange={e => setInterview({ ...interview, interview_notes: e.target.value })} /></label>
-      <button className="btn" onClick={saveInterview}>Add interview note</button>
-    </div>
-    <Timeline title="Interview notes" rows={interviews.map(r => ({ ...r, note_body: `${r.interviewee_name}: ${r.interview_notes || ""}` }))} />
-    <NotesPanel rows={notes} parentType="investigation" parentId={item.id} addRecord={addRecord} />
-  </div>;
-}
-
 function aiDraft(type, form) {
   return `Draft ${type}
 
@@ -2037,7 +2489,7 @@ function AIGenerator({ data, addRecord, realMode }) {
   </>;
 }
 
-const outreachStatuses = ["Draft", "Ready", "Sent", "Responded", "Interested", "Quote Requested", "Quote Received", "Declined", "Follow Up Needed", "Partner Selected"];
+const outreachStatuses = ["Draft", "Ready", "Sent", "Called", "Responded", "Interested", "Quote Requested", "Quote Received", "Declined", "Follow Up Needed", "Partner Selected"];
 
 function normalizeOutreachStatus(status = "") {
   const text = String(status || "").toLowerCase();
@@ -2049,6 +2501,8 @@ function normalizeOutreachStatus(status = "") {
     "email drafted": "Draft",
     sent: "Sent",
     "email sent": "Sent",
+    emailed: "Sent",
+    called: "Called",
     responded: "Responded",
     interested: "Interested",
     declined: "Declined",
@@ -2058,6 +2512,16 @@ function normalizeOutreachStatus(status = "") {
     "partner selected": "Partner Selected"
   };
   return map[text] || status || "Draft";
+}
+
+function subcontractorStatusFromOutreach(status = "") {
+  const normalized = normalizeOutreachStatus(status);
+  if (normalized === "Sent") return "emailed";
+  if (normalized === "Called") return "called";
+  if (normalized === "Responded") return "responded";
+  if (["Interested", "Quote Requested", "Quote Received", "Partner Selected"].includes(normalized)) return "interested";
+  if (normalized === "Declined") return "not interested";
+  return "";
 }
 
 function createOutreachRecord(opportunityId, subcontractorId, notes = "") {
@@ -2232,10 +2696,10 @@ function getOpportunityTimeline(opportunity, governmentData) {
   const reminderRows = (governmentData.reminders || []).filter(item => item.opportunity_id === opportunity.id);
   const outcome = normalizeAwardOutcome(opportunity.award_outcome, opportunity);
   return [
-    { title: "Opportunity created", detail: opportunity.created_at || "Demo seed record", status: "Complete" },
+    { title: "Opportunity created", detail: opportunity.created_at || "Created date not recorded", status: "Complete" },
     { title: "AI review completed", detail: opportunity.ai_review?.recommended_next_action || opportunity.ai_executive_summary, status: opportunity.ai_fit_score ? "Complete" : "Pending" },
     { title: "Subcontractors identified", detail: `${new Set(outreachRows.map(item => item.subcontractor_id)).size} attached partner(s)`, status: outreachRows.length ? "Complete" : "Pending" },
-    { title: "Outreach completed", detail: `${outreachRows.filter(item => ["Sent", "Responded", "Interested", "Quote Requested", "Quote Received", "Partner Selected"].includes(normalizeOutreachStatus(item.status))).length} outreach record(s) beyond draft`, status: outreachRows.some(item => normalizeOutreachStatus(item.status) !== "Draft") ? "Complete" : "Pending" },
+    { title: "Outreach completed", detail: `${outreachRows.filter(item => ["Sent", "Called", "Responded", "Interested", "Quote Requested", "Quote Received", "Partner Selected"].includes(normalizeOutreachStatus(item.status))).length} outreach record(s) beyond draft`, status: outreachRows.some(item => normalizeOutreachStatus(item.status) !== "Draft") ? "Complete" : "Pending" },
     { title: "Responses tracked", detail: `${outreachRows.filter(item => ["Responded", "Interested", "Quote Requested", "Quote Received", "Declined", "Partner Selected"].includes(normalizeOutreachStatus(item.status))).length} response outcome(s)`, status: outreachRows.some(item => ["Responded", "Interested", "Quote Requested", "Quote Received", "Declined", "Partner Selected"].includes(normalizeOutreachStatus(item.status))) ? "Complete" : "Pending" },
     { title: "Reminders completed", detail: `${reminderRows.filter(item => item.status === "Completed").length} of ${reminderRows.length} reminder(s) completed`, status: reminderRows.length && reminderRows.every(item => item.status === "Completed" || item.status === "Cancelled") ? "Complete" : "Pending" },
     { title: "Award outcome", detail: outcome.award_status, status: ["Awarded", "Lost", "Cancelled", "Withdrawn"].includes(outcome.award_status) ? "Complete" : "Pending" }
@@ -2246,7 +2710,7 @@ function getOutreachStats(rows) {
   return {
     drafts: rows.filter(item => normalizeOutreachStatus(item.status) === "Draft").length,
     sent: rows.filter(item => normalizeOutreachStatus(item.status) === "Sent").length,
-    awaiting: rows.filter(item => ["Sent", "Responded", "Follow Up Needed"].includes(normalizeOutreachStatus(item.status))).length,
+    awaiting: rows.filter(item => ["Sent", "Called", "Responded", "Follow Up Needed"].includes(normalizeOutreachStatus(item.status))).length,
     dueToday: rows.filter(item => {
       const days = daysUntil(item.follow_up_date);
       return days !== null && days <= 0 && !["Declined", "Quote Received", "Partner Selected"].includes(normalizeOutreachStatus(item.status));
@@ -2360,14 +2824,637 @@ function draftCapabilityIntro(opportunity, subcontractor) {
   return `${brand.business} is reviewing ${opportunity.title} for ${opportunity.agency}. We are looking for capable partners who can support ${(opportunity.subcontractor_categories || opportunity.required_capabilities || []).join(", ") || "the required scope"}. ${subcontractor.company_name || "Your company"} appears relevant because of your ${subcontractor.service_category || "listed capabilities"}. We would like to understand your past performance, availability, and whether you can provide input or a quote for this opportunity.`;
 }
 
+function normalizeDiscoveryOpportunity(item = {}) {
+  return {
+    id: item.id || uid("disc"),
+    title: item.title || "",
+    agency: item.agency || "",
+    due_date: item.due_date || item.dueDate || "",
+    opportunity_url: item.opportunity_url || item.url || item.source_url || "",
+    category: item.category || "Service contract",
+    description: item.description || "",
+    estimated_value: Number(item.estimated_value || 0),
+    date_found: item.date_found || today,
+    source: item.source || "Unknown discovery source",
+    source_type: item.source_type || "live",
+    source_label: item.source_label || "Live Source",
+    notes: item.notes || "",
+    portal_login_needed: item.portal_login_needed || "unknown",
+    document_link: item.document_link || "",
+    naics: item.naics || "",
+    local: Boolean(item.local),
+    fits_existing_naics: Boolean(item.fits_existing_naics),
+    estimated_upfront_capital: Number(item.estimated_upfront_capital || 0),
+    can_leverage_subcontractors: Boolean(item.can_leverage_subcontractors),
+    can_leverage_suppliers: Boolean(item.can_leverage_suppliers),
+    full_time_manageable: Boolean(item.full_time_manageable),
+    complexity: item.complexity || "Moderate",
+    staffing_needs: item.staffing_needs || "Needs review.",
+    equipment_needs: item.equipment_needs || "Needs review.",
+    supply_needs: item.supply_needs || "Needs review.",
+    likelihood_of_subcontracting: item.likelihood_of_subcontracting || "Unknown",
+    likelihood_of_supplier_use: item.likelihood_of_supplier_use || "Unknown"
+  };
+}
+
+function createManualDiscoveryOpportunity(values = {}) {
+  const combinedText = `${values.title || ""} ${values.agency || ""} ${values.category || ""} ${values.description || ""} ${values.notes || ""}`;
+  const lowerText = combinedText.toLowerCase();
+  const sourceType = values.source_type || "manual";
+  return normalizeDiscoveryOpportunity({
+    ...values,
+    id: uid("manual-disc"),
+    date_found: today,
+    source_type: sourceType,
+    source_label: "Manual Entry \u2014 Real Opportunity",
+    estimated_value: Number(values.estimated_value || 0),
+    portal_login_needed: values.portal_login_needed || "unknown",
+    local: /montgomery|alabama|al\b|city|county/.test(lowerText),
+    fits_existing_naics: /hr|human resources|training|consulting|administrative|admin|coordination|records|policy|compliance|management|broker|supplier|supply/.test(lowerText),
+    estimated_upfront_capital: estimateDiscoveryUpfrontCapital(combinedText),
+    can_leverage_subcontractors: /subcontract|partner|installation|delivery|service|support|coordination|specialist|vendor/.test(lowerText),
+    can_leverage_suppliers: /supply|supplies|materials|printing|equipment|product|vendor|portal|dibbs|quote/.test(lowerText),
+    full_time_manageable: !/daily onsite|full-time onsite|24\/7|large payroll|staffing|recruiting|multiple shifts/.test(lowerText),
+    complexity: /construction|bond|bonding|multi-year|statewide|multiple buildings|equipment/.test(lowerText) ? "High" : "Moderate",
+    staffing_needs: /staffing|recruiting/.test(lowerText) ? "Avoid - staffing or recruiting language detected." : "Manual entry needs review; likely owner-managed with subcontractor support if required.",
+    equipment_needs: /equipment|vehicle|machinery/.test(lowerText) ? "Review equipment requirements before pursuing." : "No major equipment need identified from manual entry.",
+    supply_needs: /supply|supplies|materials|product/.test(lowerText) ? "Supplier quote may be needed before bid/no-bid." : "No major supply need identified from manual entry.",
+    likelihood_of_subcontracting: /subcontract|partner|service|support|installation|delivery/.test(lowerText) ? "Moderate" : "Low",
+    likelihood_of_supplier_use: /supply|supplies|materials|product|quote|vendor/.test(lowerText) ? "High" : "Low"
+  });
+}
+
+function normalizeIngestedOpportunity(item = {}, adapter) {
+  return normalizeDiscoveryOpportunity({
+    ...item,
+    source: item.source || adapter.name,
+    date_found: item.date_found || today
+  });
+}
+
+function developerTestMockOpportunitiesForSource(sourceName) {
+  return developerTestOpportunityDiscoveryMock.filter(item => item.source === sourceName);
+}
+
+async function fetchAlabamaProcurementOpportunities() {
+  return fetchAlabamaBuysLiveOpportunities();
+}
+
+async function fetchCityOfMontgomeryOpportunities() {
+  return fetchCityOfMontgomeryLiveOpportunities();
+}
+
+async function fetchSamGovOpportunities() {
+  return fetchSamGovLiveOpportunities();
+}
+
+function fetchMontgomeryCountyOpportunities() {
+  // TODO: Connect Montgomery County purchasing source, manual import, or scraper here and map raw notices into normalizeIngestedOpportunity.
+  return [];
+}
+
+async function fetchAlabamaBuysLiveOpportunities() {
+  const response = await fetch(alabamaBuysPublicSolicitationsUrl, { headers: { Accept: "text/html" } });
+  if (!response.ok) throw new Error(`Alabama Buys returned ${response.status}`);
+  const html = await response.text();
+  if (/browser check|please wait while we are checking your browser|login/i.test(html)) throw new Error("Alabama Buys unavailable / blocked");
+  return parseAlabamaBuysHtml(html);
+}
+
+async function fetchCityOfMontgomeryLiveOpportunities() {
+  try {
+    const portalResponse = await fetch(cityOfMontgomeryOpenGovUrl, { headers: { Accept: "text/html" } });
+    if (portalResponse.ok) {
+      const portalHtml = await portalResponse.text();
+      const portalRows = parseCityOfMontgomeryOpenGovHtml(portalHtml);
+      if (portalRows.length) return portalRows;
+    }
+  } catch {
+    // The OpenGov portal may block static-browser or scheduled fetches; the public City page remains a status check.
+  }
+  const infoResponse = await fetch(cityOfMontgomeryBidsInfoUrl, { headers: { Accept: "text/html" } });
+  if (!infoResponse.ok) throw new Error(`City of Montgomery returned ${infoResponse.status}`);
+  const infoHtml = await infoResponse.text();
+  if (!/OpenGov|e-Procurement Portal|Bids and Request for Proposals/i.test(infoHtml)) throw new Error("City of Montgomery procurement page unavailable");
+  return parseCityOfMontgomeryInfoHtml(infoHtml);
+}
+
+function parseCityOfMontgomeryOpenGovHtml(html = "") {
+  const text = String(html || "").replace(/\s+/g, " ");
+  const rowPattern = /(?:RFP|RFQ|ITB|Bid|Solicitation)[^<]{0,260}/gi;
+  const matches = Array.from(text.matchAll(rowPattern))
+    .map(match => match[0].trim())
+    .filter(snippet => !/subscribe|register|vendor|profile|notification/i.test(snippet))
+    .slice(0, 8);
+  return matches.map((snippet, index) => normalizeCityOfMontgomeryOpportunity(snippet, `city-live-${index + 1}`, cityOfMontgomeryOpenGovUrl));
+}
+
+function parseCityOfMontgomeryInfoHtml(html = "") {
+  const text = String(html || "").replace(/\s+/g, " ");
+  const hasPortalOnly = /OpenGov|e-Procurement Portal|publishing solicitations/i.test(text);
+  if (hasPortalOnly) return [];
+  return [];
+}
+
+function getSamGovApiKey() {
+  try {
+    return (localStorage.getItem(samGovApiKeyStorageKey) || window.VALICIA_SAM_GOV_API_KEY || "").trim();
+  } catch {
+    return (window.VALICIA_SAM_GOV_API_KEY || "").trim();
+  }
+}
+
+function discoverySourceStatusError(message) {
+  const error = new Error(message);
+  error.connectionStatus = message;
+  return error;
+}
+
+async function fetchSamGovLiveOpportunities() {
+  const apiKey = getSamGovApiKey();
+  if (!apiKey) throw discoverySourceStatusError("SAM.gov not connected \u2014 API key required.");
+  const params = new URLSearchParams({
+    api_key: apiKey,
+    postedFrom: formatSamGovDate(addDays(new Date(), -30)),
+    postedTo: formatSamGovDate(new Date()),
+    ptype: "o",
+    limit: "50",
+    offset: "0"
+  });
+  const response = await fetch(`${samGovOpportunitiesApiUrl}?${params.toString()}`, { headers: { Accept: "application/json" } });
+  if (response.status === 401 || response.status === 403) throw discoverySourceStatusError("SAM.gov unavailable/blocked - check API key.");
+  if (!response.ok) throw new Error(`SAM.gov returned ${response.status}`);
+  const data = await response.json();
+  return normalizeSamGovResults(data);
+}
+
+function normalizeSamGovResults(data = {}) {
+  const rows = Array.isArray(data.opportunitiesData) ? data.opportunitiesData : [];
+  return rows
+    .filter(item => String(item.active || "").toLowerCase() !== "no")
+    .map(normalizeSamGovOpportunity)
+    .filter(item => item.title && item.opportunity_url)
+    .filter(item => !isStaffingOrRecruitingDiscovery(item))
+    .slice(0, 50);
+}
+
+function normalizeSamGovOpportunity(item = {}) {
+  const text = [
+    item.title,
+    item.type,
+    item.baseType,
+    item.typeOfSetAsideDescription,
+    item.naicsCode,
+    item.classificationCode,
+    item.fullParentPathName,
+    item.office,
+    item.description
+  ].filter(Boolean).join(" ");
+  const agency = item.fullParentPathName || [item.department, item.subTier, item.office].filter(Boolean).join(" / ") || "Federal agency";
+  const noticeUrl = item.uiLink && item.uiLink !== "null"
+    ? item.uiLink
+    : `https://sam.gov/opp/${item.noticeId || item.solicitationNumber || ""}/view`;
+  const estimatedValue = Number(item.award?.amount || 0);
+  return normalizeDiscoveryOpportunity({
+    id: `sam-${item.noticeId || item.solicitationNumber || uid("notice")}`,
+    title: item.title || "SAM.gov opportunity",
+    agency,
+    due_date: normalizeSamGovDate(item.responseDeadLine || item.reponseDeadLine || item.responseDeadline),
+    opportunity_url: noticeUrl,
+    category: inferDiscoveryCategory(text),
+    description: buildSamGovDescription(item),
+    estimated_value: Number.isFinite(estimatedValue) ? estimatedValue : 0,
+    date_found: normalizeSamGovDate(item.postedDate) || today,
+    source: "SAM.gov",
+    source_type: "live",
+    source_label: "Live Source",
+    document_link: Array.isArray(item.resourceLinks) && item.resourceLinks.length ? item.resourceLinks[0] : "",
+    naics: item.naicsCode || "",
+    local: /montgomery|alabama|\bAL\b/i.test(JSON.stringify(item.placeOfPerformance || item.officeAddress || {})),
+    fits_existing_naics: /541611|541612|611430|561110|administrative|training|consulting|hr|human resources|records|policy|coordination/i.test(text),
+    estimated_upfront_capital: estimateDiscoveryUpfrontCapital(text),
+    can_leverage_subcontractors: /service|support|maintenance|installation|coordination|logistics|consulting|training|delivery|subcontract/i.test(text),
+    can_leverage_suppliers: /supply|supplies|materials|product|equipment|printing|parts|hardware|software|subscription|vendor/i.test(text),
+    full_time_manageable: !/24\/7|full-time onsite|daily onsite|staffing|recruiting|construction crew|large payroll|multiple shifts|bonding|performance bond/i.test(text),
+    complexity: /construction|bond|bonding|statewide|enterprise|multi-year|multiple locations|facility-wide|large-scale/i.test(text) ? "High" : "Moderate",
+    staffing_needs: /staffing|recruiting/.test(text.toLowerCase()) ? "Avoid - staffing or recruiting language detected." : "Review federal scope; likely feasible only with subcontractor or supplier support if delivery is broad.",
+    equipment_needs: /equipment|vehicle|machinery|hardware/.test(text.toLowerCase()) ? "Review equipment requirements before pursuing." : "No major equipment need identified from SAM.gov summary.",
+    supply_needs: /supply|supplies|materials|parts|product/.test(text.toLowerCase()) ? "Supplier quote may be needed before bid/no-bid." : "No major supply need identified from SAM.gov summary.",
+    likelihood_of_subcontracting: /service|support|installation|maintenance|delivery|training|consulting/.test(text.toLowerCase()) ? "Moderate" : "Low",
+    likelihood_of_supplier_use: /supply|supplies|materials|parts|product|equipment/.test(text.toLowerCase()) ? "High" : "Moderate"
+  });
+}
+
+function buildSamGovDescription(item = {}) {
+  return [
+    item.type ? `Type: ${item.type}.` : "",
+    item.solicitationNumber ? `Solicitation: ${item.solicitationNumber}.` : "",
+    item.typeOfSetAsideDescription ? `Set-aside: ${item.typeOfSetAsideDescription}.` : "",
+    item.naicsCode ? `NAICS: ${item.naicsCode}.` : "",
+    item.classificationCode ? `PSC/classification: ${item.classificationCode}.` : "",
+    item.responseDeadLine || item.reponseDeadLine ? `Response deadline: ${item.responseDeadLine || item.reponseDeadLine}.` : ""
+  ].filter(Boolean).join(" ") || "Live SAM.gov opportunity. Review the notice and attachments before bid/no-bid.";
+}
+
+function normalizeCityOfMontgomeryOpportunity(snippet, id, url) {
+  return normalizeDiscoveryOpportunity({
+    id,
+    title: snippet.slice(0, 96),
+    agency: "City of Montgomery",
+    due_date: normalizeDateFromText(snippet),
+    opportunity_url: url,
+    category: inferDiscoveryCategory(snippet),
+    description: snippet,
+    estimated_value: 0,
+    date_found: today,
+    source: "City of Montgomery opportunities",
+    naics: inferDiscoveryNaics(snippet),
+    local: true,
+    fits_existing_naics: /hr|training|administrative|consulting|policy|records|workshop|coordination/i.test(snippet),
+    estimated_upfront_capital: estimateDiscoveryUpfrontCapital(snippet),
+    can_leverage_subcontractors: /service|support|training|installation|coordination|delivery/i.test(snippet),
+    can_leverage_suppliers: /supply|supplies|materials|printing|equipment|books|advertising/i.test(snippet),
+    full_time_manageable: !/multiple buildings|recurring daily|24\/7|large|citywide deployment/i.test(snippet),
+    complexity: /citywide|multiple|installation|construction/i.test(snippet) ? "High" : "Moderate",
+    staffing_needs: "Needs review from live City of Montgomery solicitation details.",
+    equipment_needs: "Needs review from live City of Montgomery solicitation details.",
+    supply_needs: "Needs review from live City of Montgomery solicitation details.",
+    likelihood_of_subcontracting: /service|installation|delivery|support/i.test(snippet) ? "Moderate" : "Low",
+    likelihood_of_supplier_use: /supply|supplies|materials|books|equipment/i.test(snippet) ? "High" : "Moderate"
+  });
+}
+
+function parseAlabamaBuysHtml(html = "") {
+  const text = String(html || "").replace(/\s+/g, " ");
+  const rowPattern = /(?:SRC\d{7,}|RFP|RFQ|ITB)[^<]{0,240}/gi;
+  const matches = Array.from(text.matchAll(rowPattern)).slice(0, 8);
+  return matches.map((match, index) => {
+    const snippet = match[0].trim();
+    const id = (snippet.match(/SRC\d{7,}/i) || [])[0] || `AL-LIVE-${index + 1}`;
+    const dueDate = normalizeDateFromText(snippet) || "";
+    return normalizeDiscoveryOpportunity({
+      id: `al-live-${id.toLowerCase()}`,
+      title: snippet.slice(0, 96),
+      agency: "State of Alabama",
+      due_date: dueDate,
+      opportunity_url: alabamaBuysPublicSolicitationsUrl,
+      category: inferDiscoveryCategory(snippet),
+      description: snippet,
+      estimated_value: 0,
+      date_found: today,
+      source: "Alabama Buys",
+      naics: inferDiscoveryNaics(snippet),
+      local: /montgomery|alabama/i.test(snippet),
+      fits_existing_naics: /hr|training|administrative|consulting|policy|records|workshop|coordination/i.test(snippet),
+      estimated_upfront_capital: estimateDiscoveryUpfrontCapital(snippet),
+      can_leverage_subcontractors: /service|support|training|installation|coordination|delivery/i.test(snippet),
+      can_leverage_suppliers: /supply|supplies|materials|printing|equipment|books|advertising/i.test(snippet),
+      full_time_manageable: !/multiple buildings|recurring daily|24\/7|large|statewide deployment/i.test(snippet),
+      complexity: /statewide|multiple|installation|construction/i.test(snippet) ? "High" : "Moderate",
+      staffing_needs: "Needs review from live Alabama Buys solicitation details.",
+      equipment_needs: "Needs review from live Alabama Buys solicitation details.",
+      supply_needs: "Needs review from live Alabama Buys solicitation details.",
+      likelihood_of_subcontracting: /service|installation|delivery|support/i.test(snippet) ? "Moderate" : "Low",
+      likelihood_of_supplier_use: /supply|supplies|materials|books|equipment/i.test(snippet) ? "High" : "Moderate"
+    });
+  });
+}
+
+function normalizeDateFromText(text = "") {
+  const match = String(text).match(/\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+20\d{2}\b/i);
+  if (!match) return "";
+  const date = new Date(match[0]);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+}
+
+function formatSamGovDate(date) {
+  return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}/${date.getFullYear()}`;
+}
+
+function normalizeSamGovDate(value = "") {
+  if (!value) return "";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? "" : parsed.toISOString().slice(0, 10);
+}
+
+function inferDiscoveryCategory(text = "") {
+  const value = String(text).toLowerCase();
+  if (/hr|policy|handbook|employee/.test(value)) return "HR consulting";
+  if (/training|workshop/.test(value)) return "Training and coordination";
+  if (/supply|supplies|materials|books/.test(value)) return "Supply and coordination";
+  if (/logistics|delivery|fulfillment|shipping/.test(value)) return "Logistics coordination";
+  if (/consulting|management|program support|technical assistance/.test(value)) return "Consulting and management support";
+  if (/administrative|records|coordination/.test(value)) return "Administrative services";
+  if (/software|subscription|license|it support/.test(value)) return "Technology or supplier-supported services";
+  return "Government opportunity";
+}
+
+function inferDiscoveryNaics(text = "") {
+  const value = String(text).toLowerCase();
+  if (/hr|policy|employee/.test(value)) return "541612";
+  if (/training|workshop/.test(value)) return "611430";
+  if (/administrative|records|coordination/.test(value)) return "541611";
+  return "";
+}
+
+function estimateDiscoveryUpfrontCapital(text = "") {
+  const value = String(text).toLowerCase();
+  if (/bond|bonding|construction crew|vehicle fleet|heavy equipment|major inventory|statewide deployment|multiple buildings/.test(value)) return 6500;
+  if (/construction|vehicle|equipment|statewide|multiple locations/.test(value)) return 5000;
+  if (/supplies|materials|books|printing|parts|hardware/.test(value)) return 1500;
+  if (/consulting|training|administrative|records|coordination|program support|technical assistance/.test(value)) return 750;
+  return 750;
+}
+
+function isStaffingOrRecruitingDiscovery(item = {}) {
+  return /staffing|recruiting|temporary labor|temp labor|personnel placement|staff augmentation/i.test(`${item.title || ""} ${item.description || ""} ${item.category || ""}`);
+}
+
+function createOpportunityDiscoveryInitialResult() {
+  const sourceStatuses = opportunityDiscoveryAdapters.map(adapter => {
+    return {
+      id: adapter.id,
+      name: adapter.name,
+      sourceType: adapter.sourceType,
+      connectionStatus: adapter.connectionStatus,
+      count: 0
+    };
+  });
+  return {
+    opportunities: [],
+    sourceStatuses,
+    mode: "Live Only",
+    connectionStatus: "No live check run yet",
+    lastChecked: currentDateTime()
+  };
+}
+
+function createDeveloperTestOpportunityDiscoveryResult() {
+  const sourceStatuses = opportunityDiscoveryAdapters.map(adapter => {
+    const rows = developerTestMockOpportunitiesForSource(adapter.name);
+    return {
+      id: adapter.id,
+      name: adapter.name,
+      sourceType: "Developer/Test Mock Data",
+      connectionStatus: "developer test mode only",
+      count: rows.length
+    };
+  });
+  return {
+    opportunities: developerTestOpportunityDiscoveryMock.map(normalizeDiscoveryOpportunity),
+    sourceStatuses,
+    mode: "Developer/Test Mock Data",
+    connectionStatus: "Developer/test mode only",
+    lastChecked: currentDateTime()
+  };
+}
+
+async function runOpportunityDiscoveryIngestion() {
+  const results = await Promise.all(opportunityDiscoveryAdapters.map(async adapter => {
+    if (!adapter.liveConnected) {
+      return {
+        rows: [],
+        status: {
+          id: adapter.id,
+          name: adapter.name,
+          sourceType: adapter.sourceType,
+          connectionStatus: "not connected yet",
+          count: 0
+        }
+      };
+    }
+    try {
+      const rows = (await adapter.fetch()).map(item => normalizeIngestedOpportunity(item, adapter));
+      return {
+        rows,
+        status: {
+          id: adapter.id,
+          name: adapter.name,
+          sourceType: adapter.sourceType,
+          connectionStatus: rows.length ? "live connected" : "no live opportunities found",
+          count: rows.length
+        }
+      };
+    } catch (error) {
+      return {
+        rows: [],
+        status: {
+          id: adapter.id,
+          name: adapter.name,
+          sourceType: adapter.sourceType,
+          connectionStatus: error.connectionStatus || "unavailable/blocked",
+          count: 0
+        }
+      };
+    }
+  }));
+  const opportunities = results.flatMap(result => result.rows);
+  const sourceStatuses = results.map(result => result.status);
+  return {
+    opportunities,
+    sourceStatuses,
+    mode: "Live Only",
+    connectionStatus: opportunities.length ? "Live opportunities found" : "No live opportunities found from connected sources yet.",
+    lastChecked: currentDateTime()
+  };
+}
+
+function pipelineHasDiscoveryOpportunity(governmentData, discoveryItem) {
+  const url = discoveryItem.opportunity_url || "";
+  const discoveryNumber = `DISC-${discoveryItem.id}`;
+  return (governmentData.opportunities || []).some(item =>
+    (url && item.source_url === url) ||
+    item.solicitation_number === discoveryNumber ||
+    item.title === discoveryItem.title
+  );
+}
+
+function selectTopDiscoveryMatches(opportunities, governmentData = {}) {
+  return opportunities
+    .map(item => ({ ...item, assessment: assessDiscoveryOpportunity(item) }))
+    .filter(item => item.assessment.tier !== "Tier C")
+    .sort((a, b) => {
+      const tierWeight = tier => tier === "Tier A" ? 0 : tier === "Tier B" ? 1 : 2;
+      return tierWeight(a.assessment.tier) - tierWeight(b.assessment.tier)
+        || b.assessment.score - a.assessment.score
+        || Number(a.estimated_upfront_capital || 0) - Number(b.estimated_upfront_capital || 0);
+    })
+    .slice(0, 5)
+    .map(item => ({
+      ...item,
+      isNewTierA: item.assessment.tier === "Tier A" && !pipelineHasDiscoveryOpportunity(governmentData, item)
+    }));
+}
+
+function runDailyOpportunityDiscoveryAutomation(governmentData = {}, ingestionInput) {
+  const ingestion = ingestionInput || runOpportunityDiscoveryIngestion();
+  const scored = ingestion.opportunities.map(item => ({ ...item, assessment: assessDiscoveryOpportunity(item) }));
+  const topMatches = selectTopDiscoveryMatches(ingestion.opportunities, governmentData);
+  return {
+    ...ingestion,
+    scored,
+    topMatches,
+    newTierA: topMatches.filter(item => item.isNewTierA),
+    reviewQueue: topMatches.map(item => ({
+      id: `review-${item.id}`,
+      title: item.title,
+      agency: item.agency,
+      tier: item.assessment.tier,
+      score: item.assessment.score,
+      due_date: item.due_date,
+      priority: item.isNewTierA ? "High" : "Normal",
+      status: pipelineHasDiscoveryOpportunity(governmentData, item) ? "In Pipeline" : "Needs Review",
+      notes: item.assessment.recommended_action
+    })),
+    automationStatus: "Daily Automation Ready",
+    lastRun: ingestion.lastChecked
+  };
+}
+
+function createDiscoveryReviewQueue(opportunities, governmentData = {}) {
+  return selectTopDiscoveryMatches(opportunities, governmentData).map(item => ({
+    id: `review-${item.id}`,
+    title: item.title,
+    agency: item.agency,
+    tier: item.assessment.tier,
+    score: item.assessment.score,
+    due_date: item.due_date,
+    source_label: item.source_label || "Live Source",
+    priority: item.isNewTierA ? "High" : "Normal",
+    status: pipelineHasDiscoveryOpportunity(governmentData, item) ? "In Pipeline" : "Needs Review",
+    notes: item.assessment.recommended_action
+  }));
+}
+
+function getInitialManualDiscoveryForm() {
+  return {
+    title: "",
+    agency: "",
+    due_date: "",
+    opportunity_url: "",
+    source: "",
+    category: "",
+    description: "",
+    estimated_value: "",
+    notes: "",
+    portal_login_needed: "unknown",
+    document_link: "",
+    source_type: "manual"
+  };
+}
+
+function scoreDiscoveryOpportunity(item) {
+  const opportunity = normalizeDiscoveryOpportunity(item);
+  const score =
+    (opportunity.local ? 20 : 0) +
+    (opportunity.fits_existing_naics ? 20 : 0) +
+    (opportunity.estimated_upfront_capital <= 2000 ? 30 : 0) +
+    (opportunity.can_leverage_subcontractors ? 10 : 0) +
+    (opportunity.can_leverage_suppliers ? 10 : 0) +
+    (opportunity.full_time_manageable ? 10 : 0);
+  return score;
+}
+
+function classifyDiscoveryOpportunity(item) {
+  const opportunity = normalizeDiscoveryOpportunity(item);
+  const score = scoreDiscoveryOpportunity(opportunity);
+  if (opportunity.estimated_upfront_capital <= 2000 && score >= 80) return "Tier A";
+  if (opportunity.estimated_upfront_capital <= 4000 && score >= 50) return "Tier B";
+  return "Tier C";
+}
+
+function assessDiscoveryOpportunity(item) {
+  const opportunity = normalizeDiscoveryOpportunity(item);
+  const score = scoreDiscoveryOpportunity(opportunity);
+  const tier = classifyDiscoveryOpportunity(opportunity);
+  const recommendedAction = tier === "Tier A"
+    ? "Review opportunity and add to the government pipeline."
+    : tier === "Tier B"
+      ? "Validate requirements, pricing, and partner plan before pursuing."
+      : "Archive unless scope or capital requirements change.";
+  const fitReasons = [
+    opportunity.local ? "local to Montgomery/Alabama" : "",
+    opportunity.fits_existing_naics ? "aligned with existing consulting/admin NAICS" : "",
+    opportunity.estimated_upfront_capital <= 2000 ? "estimated upfront capital is within the $2,000 limit" : "",
+    opportunity.can_leverage_subcontractors ? "can use subcontractor support" : "",
+    opportunity.can_leverage_suppliers ? "can use suppliers instead of buying equipment" : "",
+    opportunity.full_time_manageable ? "can be managed around full-time employment" : ""
+  ].filter(Boolean);
+  return {
+    score,
+    tier,
+    estimated_upfront_capital_required: opportunity.estimated_upfront_capital,
+    complexity: opportunity.complexity,
+    staffing_needs: opportunity.staffing_needs,
+    equipment_needs: opportunity.equipment_needs,
+    supply_needs: opportunity.supply_needs,
+    likelihood_of_subcontracting: opportunity.likelihood_of_subcontracting,
+    likelihood_of_supplier_use: opportunity.likelihood_of_supplier_use,
+    recommended_action: recommendedAction,
+    why_this_fits_valicia: fitReasons.length
+      ? `This is practical because it is ${fitReasons.join(", ")}.`
+      : "This needs caution because it does not clearly match Valicia's low-capital, owner-managed pursuit profile."
+  };
+}
+
+function discoveryToGovernmentOpportunity(item) {
+  const opportunity = normalizeDiscoveryOpportunity(item);
+  const assessment = assessDiscoveryOpportunity(opportunity);
+  return normalizeGovernmentOpportunity({
+    title: opportunity.title,
+    agency: opportunity.agency,
+    solicitation_number: `DISC-${opportunity.id}`,
+    naics: opportunity.naics,
+    set_aside: "Small business / local review",
+    due_date: opportunity.due_date,
+    estimated_value: opportunity.estimated_value,
+    source_url: opportunity.opportunity_url,
+    ai_fit_score: assessment.score,
+    status: "AI Review",
+    next_action: assessment.recommended_action,
+    notes: `${opportunity.description}\n\nCapital-aware discovery source: ${opportunity.source}. Estimated upfront capital: ${amount(assessment.estimated_upfront_capital_required)}. Tier: ${assessment.tier}.`,
+    pws_summary: opportunity.description,
+    summary: opportunity.description,
+    requirements: `Category: ${opportunity.category}. Validate solicitation requirements, insurance, bonding, timeline, and payment terms before bid.`,
+    scope_of_work: opportunity.description,
+    risks: [
+      assessment.estimated_upfront_capital_required > 2000 ? "Estimated upfront capital exceeds the target limit." : "Confirm payment timing before committing costs.",
+      opportunity.full_time_manageable ? "Confirm deadline workload fits evenings/weekends." : "May not be manageable while employed full-time."
+    ],
+    required_capabilities: [opportunity.category, "Vendor coordination", "Government response management"],
+    subcontractor_categories: [
+      opportunity.can_leverage_subcontractors ? "Specialized delivery subcontractor" : "",
+      opportunity.can_leverage_suppliers ? "Local supplier" : "",
+      "Proposal pricing"
+    ].filter(Boolean),
+    documents_needed: ["Capability statement", "Pricing worksheet", "Insurance requirements review", "Subcontractor or supplier quote if needed"],
+    decision: assessment.tier === "Tier C" ? "pass" : "pursue",
+    ai_review: {
+      why: assessment.why_this_fits_valicia,
+      risks: assessment.estimated_upfront_capital_required > 2000 ? ["Upfront capital may exceed the preferred limit."] : ["Validate payment timing and contract terms."],
+      missing_requirements: ["Final solicitation document", "Insurance/bonding requirements", "Pricing worksheet"],
+      recommended_next_action: assessment.recommended_action,
+      suggested_subcontractor_categories: [
+        opportunity.can_leverage_subcontractors ? "Specialized delivery subcontractor" : "",
+        opportunity.can_leverage_suppliers ? "Supplier/vendor quote" : ""
+      ].filter(Boolean)
+    }
+  });
+}
+
+/*
+Government section implementation lives in src/sections/government.jsx and is
+loaded through window.loadValiciaSection("government"). Keep this legacy copy
+inactive so the section file remains the single live source of truth.
 function GovernmentCenter({ page, governmentData, updateGovernmentData, saveGovernmentOpportunity, deleteGovernmentOpportunity, setPage }) {
   const selectedOpportunity = getSelectedOpportunity(governmentData);
   const selectOpportunity = id => updateGovernmentData({ ...governmentData, selectedOpportunityId: id });
-  if (!selectedOpportunity && page !== "Opportunities") {
+  if (!selectedOpportunity && !["Opportunity Discovery", "Opportunities"].includes(page)) {
     return <MockWorkspace title={page} subtitle="Create or select a government opportunity first." items={[{ title: "No opportunity selected", detail: "Open Government Opportunities and add a persistent opportunity record.", status: "Empty" }]} />;
   }
   const updateOpportunity = updates => saveGovernmentOpportunity({ ...selectedOpportunity, ...updates }, selectedOpportunity.id);
 
+  if (page === "Opportunity Discovery") return <OpportunityDiscovery governmentData={governmentData} saveGovernmentOpportunity={saveGovernmentOpportunity} setPage={setPage} />;
   if (page === "Opportunities") return <GovernmentOpportunities governmentData={governmentData} selectOpportunity={selectOpportunity} saveGovernmentOpportunity={saveGovernmentOpportunity} deleteGovernmentOpportunity={deleteGovernmentOpportunity} setPage={setPage} />;
   if (page === "Opportunity Detail") return <OpportunityDetail opportunity={selectedOpportunity} governmentData={governmentData} updateOpportunity={updateOpportunity} setPage={setPage} />;
   if (page === "AI Fit Review") return <AIFitReview opportunity={selectedOpportunity} updateOpportunity={updateOpportunity} setPage={setPage} />;
@@ -2376,6 +3463,317 @@ function GovernmentCenter({ page, governmentData, updateGovernmentData, saveGove
   if (page === "Reminder Queue") return <ReminderQueue governmentData={governmentData} updateGovernmentData={updateGovernmentData} />;
   if (page === "Awards") return <AwardsTracker governmentData={governmentData} updateGovernmentData={updateGovernmentData} />;
   return <GovernmentOpportunities governmentData={governmentData} selectOpportunity={selectOpportunity} setPage={setPage} />;
+}
+
+function OpportunityDiscovery({ governmentData, saveGovernmentOpportunity, setPage }) {
+  const [sourceFilter, setSourceFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("All");
+  const [tierFilter, setTierFilter] = useState("All");
+  const [dueFilter, setDueFilter] = useState("All");
+  const [archivedIds, setArchivedIds] = useState([]);
+  const [ingestionResult, setIngestionResult] = useState(() => createOpportunityDiscoveryInitialResult());
+  const [manualOpportunities, setManualOpportunities] = useState([]);
+  const [manualForm, setManualForm] = useState(() => getInitialManualDiscoveryForm());
+  const [manualFormError, setManualFormError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const automationResult = useMemo(() => runDailyOpportunityDiscoveryAutomation(governmentData, ingestionResult), [governmentData, ingestionResult]);
+  const allDiscoveryOpportunities = useMemo(
+    () => [...manualOpportunities, ...ingestionResult.opportunities],
+    [manualOpportunities, ingestionResult.opportunities]
+  );
+  const reviewQueue = useMemo(() => createDiscoveryReviewQueue(allDiscoveryOpportunities, governmentData), [allDiscoveryOpportunities, governmentData]);
+  const refreshOpportunities = async () => {
+    setRefreshing(true);
+    try {
+      setIngestionResult(await runOpportunityDiscoveryIngestion());
+    } catch {
+      setIngestionResult(createOpportunityDiscoveryInitialResult());
+    } finally {
+      setRefreshing(false);
+    }
+  };
+  const setManualField = (key, value) => {
+    setManualForm({ ...manualForm, [key]: value });
+    if (manualFormError) setManualFormError("");
+  };
+  const addManualOpportunity = event => {
+    event.preventDefault();
+    const required = ["title", "agency", "due_date", "opportunity_url", "source", "category", "description"];
+    const missing = required.filter(key => !String(manualForm[key] || "").trim());
+    if (missing.length) {
+      setManualFormError(`Complete required field(s): ${missing.map(label).join(", ")}.`);
+      return;
+    }
+    const manualOpportunity = createManualDiscoveryOpportunity(manualForm);
+    setManualOpportunities([manualOpportunity, ...manualOpportunities]);
+    setManualForm(getInitialManualDiscoveryForm());
+  };
+  const opportunities = allDiscoveryOpportunities
+    .map(item => ({ ...item, assessment: assessDiscoveryOpportunity(item) }))
+    .filter(item => !archivedIds.includes(item.id));
+  const sources = ["All", ...Array.from(new Set([...opportunityDiscoverySources, ...manualOpportunities.map(item => item.source)].filter(Boolean)))];
+  const categories = ["All", ...Array.from(new Set(opportunities.map(item => item.category)))];
+  const dueMatches = item => {
+    const days = daysUntil(item.due_date);
+    if (dueFilter === "All") return true;
+    if (dueFilter === "Next 14 days") return days !== null && days >= 0 && days <= 14;
+    if (dueFilter === "Next 30 days") return days !== null && days >= 0 && days <= 30;
+    return true;
+  };
+  const visible = opportunities
+    .filter(item => sourceFilter === "All" || item.source === sourceFilter)
+    .filter(item => categoryFilter === "All" || item.category === categoryFilter)
+    .filter(item => tierFilter === "All" || item.assessment.tier === tierFilter)
+    .filter(dueMatches)
+    .sort((a, b) => {
+      const tierWeight = tier => tier === "Tier A" ? 0 : tier === "Tier B" ? 1 : 2;
+      return tierWeight(a.assessment.tier) - tierWeight(b.assessment.tier) || b.assessment.score - a.assessment.score;
+    });
+  const tierA = visible.filter(item => item.assessment.tier === "Tier A").length;
+  const addToPipeline = async (item, status = "AI Review", nextPage = "Opportunities") => {
+    await saveGovernmentOpportunity({ ...discoveryToGovernmentOpportunity(item), status });
+    setPage(nextPage);
+  };
+  const archive = id => setArchivedIds([...archivedIds, id]);
+  return (
+    <>
+      <Title title="Opportunity Discovery" subtitle="Capital-aware local and state opportunity shortlist for practical government pursuits." action={<button className="btn" onClick={refreshOpportunities}>{refreshing ? "Refreshing..." : "Refresh Opportunities"}</button>} />
+      <div className="grid metrics">
+        <Metric label="Curated opportunities" value={visible.length} />
+        <Metric label="Tier A matches" value={tierA} />
+        <Metric label="Capital target" value="$2,000" />
+        <Metric label="Ingestion mode" value={ingestionResult.mode} />
+      </div>
+      <div className="card">
+        <div className="panel-head"><h3>Daily automation</h3><span className="badge success">{automationResult.automationStatus}</span></div>
+        <p className="muted">Last run: {automationResult.lastRun}. Scheduled automation uses live adapters only. Manual entries are real opportunities Valicia adds in this browser session and are scored in Top Matches for Review, but they are not invented by the daily script.</p>
+        <div className="mini-metrics">
+          <span><b>{automationResult.topMatches.length}</b><small>top matches</small></span>
+          <span><b>{automationResult.newTierA.length}</b><small>new Tier A</small></span>
+          <span><b>{manualOpportunities.length}</b><small>manual real entries</small></span>
+        </div>
+      </div>
+      <div className="card">
+        <div className="panel-head"><h3>Ingestion status</h3><span className="badge">{ingestionResult.connectionStatus}</span></div>
+        <div className="grid three-col">
+          {ingestionResult.sourceStatuses.map(source => <div className="info-block" key={source.id}>
+            <h4>{source.name}</h4>
+            <p><strong>{source.name}:</strong> {source.connectionStatus}</p>
+            <p className="muted">{source.count} normalized opportunity record(s).</p>
+          </div>)}
+        </div>
+        <p className="muted">Last checked: {ingestionResult.lastChecked}. {ingestionResult.connectionStatus}</p>
+      </div>
+      <OpportunityIntakePanel onAdd={opp => setManualOpportunities([opp, ...manualOpportunities])} />
+      <div className="card form">
+        <div className="panel-head"><h3>Manual Add Opportunity</h3><span className="badge success">Manual Entry {"\u2014"} Real Opportunity</span></div>
+        <p className="muted">Use this for real notices copied from blocked portals, DIBBS, SAM.gov, Alabama Buys, City or County portals, emails, PDFs, or vendor portals. Entries are local to this app session until database persistence is added.</p>
+        <form onSubmit={addManualOpportunity}>
+          <div className="grid three-col">
+            <label>Title<input required value={manualForm.title} onChange={e => setManualField("title", e.target.value)} /></label>
+            <label>Agency<input required value={manualForm.agency} onChange={e => setManualField("agency", e.target.value)} /></label>
+            <label>Due date<input required type="date" value={manualForm.due_date} onChange={e => setManualField("due_date", e.target.value)} /></label>
+            <label>Opportunity URL<input required type="url" value={manualForm.opportunity_url} onChange={e => setManualField("opportunity_url", e.target.value)} /></label>
+            <label>Source<input required value={manualForm.source} onChange={e => setManualField("source", e.target.value)} placeholder="SAM.gov, DIBBS, Alabama Buys..." /></label>
+            <label>Category<input required value={manualForm.category} onChange={e => setManualField("category", e.target.value)} placeholder="Admin services, supplies..." /></label>
+            <label>Estimated value<input type="number" min="0" value={manualForm.estimated_value} onChange={e => setManualField("estimated_value", e.target.value)} /></label>
+            <label>Portal/login needed<select value={manualForm.portal_login_needed} onChange={e => setManualField("portal_login_needed", e.target.value)}>{["unknown", "yes", "no"].map(option => <option key={option}>{option}</option>)}</select></label>
+            <label>Source type<select value={manualForm.source_type} onChange={e => setManualField("source_type", e.target.value)}>{["manual", "live", "credentialed portal", "email/PDF"].map(option => <option key={option}>{option}</option>)}</select></label>
+            <label>Document link<input value={manualForm.document_link} onChange={e => setManualField("document_link", e.target.value)} placeholder="PDF or shared document URL" /></label>
+          </div>
+          <label>Description<textarea required rows="4" value={manualForm.description} onChange={e => setManualField("description", e.target.value)} /></label>
+          <label>Notes<textarea rows="3" value={manualForm.notes} onChange={e => setManualField("notes", e.target.value)} placeholder="Bid details, login notes, quote needs, or why this looks practical." /></label>
+          {manualFormError && <p className="badge danger">{manualFormError}</p>}
+          <div className="actions"><button className="btn" type="submit">Add Real Opportunity</button></div>
+        </form>
+      </div>
+      <div className="card toolbar filter-bar">
+        <label>Source<select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)}>{sources.map(source => <option key={source}>{source}</option>)}</select></label>
+        <label>Category<select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>{categories.map(category => <option key={category}>{category}</option>)}</select></label>
+        <label>Tier<select value={tierFilter} onChange={e => setTierFilter(e.target.value)}>{["All", "Tier A", "Tier B", "Tier C"].map(tier => <option key={tier}>{tier}</option>)}</select></label>
+        <label>Due date<select value={dueFilter} onChange={e => setDueFilter(e.target.value)}>{["All", "Next 14 days", "Next 30 days"].map(option => <option key={option}>{option}</option>)}</select></label>
+      </div>
+      <div className="card">
+        <div className="panel-head"><h3>Top Matches for Review</h3><span className="badge">{reviewQueue.length} queued</span></div>
+        <div className="activity compact">
+          {reviewQueue.map(item => <div key={item.id}>
+            <strong>{item.title}</strong>
+            <span className="muted">{item.agency} - {item.tier} - {item.score} score - due {item.due_date || "TBD"}</span>
+            <span className="muted">{item.source_label}</span>
+            <span className={item.priority === "High" ? "badge success" : "badge"}>{item.status}{item.priority === "High" ? " - New Tier A" : ""}</span>
+          </div>)}
+          {!reviewQueue.length && <p className="muted">No live opportunities found from connected sources yet. Add a real opportunity manually if a portal is blocked or credentialed.</p>}
+        </div>
+      </div>
+      <div className="grid two-col">
+        {visible.map(item => {
+          const assessment = item.assessment;
+          const tierClass = assessment.tier === "Tier A" ? "badge success" : assessment.tier === "Tier B" ? "badge warn" : "badge danger";
+          return <div className="card action-card form" key={item.id}>
+            <div className="panel-head"><h3>{item.title}</h3><span className={tierClass}>{assessment.tier}</span></div>
+            <p><strong>{item.agency}</strong> - {item.source}</p>
+            <p><span className="badge success">{item.source_label || "Live Source"}</span> <span className="muted">{item.source} - found {item.date_found} - {item.category} - <a href={item.opportunity_url} target="_blank" rel="noreferrer">Opportunity URL</a></span></p>
+            {item.document_link && <p className="muted">Document: <a href={item.document_link} target="_blank" rel="noreferrer">Open document</a></p>}
+            {item.portal_login_needed !== "unknown" && <p className="muted">Portal/login needed: {item.portal_login_needed}</p>}
+            <p>{item.description}</p>
+            {item.notes && <p className="muted"><strong>Notes:</strong> {item.notes}</p>}
+            <div className="mini-metrics">
+              <span><b>{assessment.score}</b><small>capital fit score</small></span>
+              <span><b>{amount(assessment.estimated_upfront_capital_required)}</b><small>upfront capital</small></span>
+              <span><b>{item.due_date || "TBD"}</b><small>{dueLabel(item.due_date)}</small></span>
+              <span><b>{item.estimated_value ? amount(item.estimated_value) : "TBD"}</b><small>estimated value</small></span>
+            </div>
+            <InfoBlock title="Why This Fits Valicia" text={assessment.why_this_fits_valicia} />
+            <div className="info-block">
+              <h4>AI assessment</h4>
+              <p><strong>Complexity:</strong> {assessment.complexity}</p>
+              <p><strong>Staffing:</strong> {assessment.staffing_needs}</p>
+              <p><strong>Equipment:</strong> {assessment.equipment_needs}</p>
+              <p><strong>Supplies:</strong> {assessment.supply_needs}</p>
+              <p><strong>Subcontracting:</strong> {assessment.likelihood_of_subcontracting} - <strong>Supplier use:</strong> {assessment.likelihood_of_supplier_use}</p>
+              <p><strong>Recommended action:</strong> {assessment.recommended_action}</p>
+            </div>
+            <div className="actions">
+              <button className="btn secondary" onClick={() => addToPipeline(item, "AI Review", "Opportunity Detail")}>Review Opportunity</button>
+              <button className="btn secondary" onClick={() => addToPipeline(item, "AI Review", "Opportunities")}>Add to Pipeline</button>
+              <button className="btn secondary" onClick={() => addToPipeline(item, "Subcontractors", "Subcontractor Finder")}>Find Subcontractors</button>
+              <button className="btn secondary" onClick={() => archive(item.id)}>Archive</button>
+            </div>
+          </div>;
+        })}
+        {!visible.length && <div className="card"><p className="muted">No live opportunities found from connected sources yet.</p></div>}
+      </div>
+      <div className="card">
+        <div className="panel-head"><h3>Future ingestion placeholders</h3><span className="badge">Live-only dashboard</span></div>
+        <p className="muted">Normal Opportunity Discovery shows live records only. Developer/test mock data remains available through `createDeveloperTestOpportunityDiscoveryResult`, but mock rows are not displayed in the dashboard or written by daily automation.</p>
+      </div>
+    </>
+  );
+}
+
+function OpportunityIntakePanel({ onAdd }) {
+  const MAX_TEXT_CHARS = 6000;
+  const MAX_FILE_BYTES = 2 * 1024 * 1024;
+  const RAW_SCAN_LIMIT = 80000;
+
+  const [intakeTab,   setIntakeTab]   = useState("text");
+  const [intakeText,  setIntakeText]  = useState("");
+  const [intakeUrl,   setIntakeUrl]   = useState("");
+  const [fileStatus,  setFileStatus]  = useState("");
+  const [fileLoading, setFileLoading] = useState(false);
+  const [editForm,    setEditForm]    = useState(null);
+  const [intakeErr,   setIntakeErr]   = useState("");
+  const [intakeSaved, setIntakeSaved] = useState(false);
+  // Computed once on Extract click — never on every keystroke
+  const [fulfillment,  setFulfillment]  = useState([]);
+  const [searchTerms,  setSearchTerms]  = useState([]);
+
+  const readFile = e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > MAX_FILE_BYTES) {
+      setFileStatus("File exceeds 2 MB — paste the solicitation text instead.");
+      return;
+    }
+    setFileLoading(true);
+    setFileStatus("Reading " + file.name + "...");
+    setIntakeErr("");
+    const reader = new FileReader();
+    reader.onload = evt => {
+      const raw = String(evt.target.result || "").slice(0, RAW_SCAN_LIMIT);
+      const printable = raw.replace(/[^\x20-\x7E\n\r\t]/g, " ").replace(/ {3,}/g, " ").trim();
+      setFileLoading(false);
+      if (printable.length < 40) {
+        setFileStatus(file.name + " — binary PDF with minimal readable text. Paste the solicitation text manually.");
+        setIntakeText("");
+      } else {
+        setFileStatus(file.name + " — " + printable.length + " readable characters extracted.");
+        setIntakeText(printable.slice(0, MAX_TEXT_CHARS));
+      }
+    };
+    reader.onerror = () => { setFileLoading(false); setFileStatus("Could not read file. Paste the solicitation text instead."); };
+    reader.readAsText(file, "utf-8");
+  };
+
+  const handleExtract = () => {
+    const text = intakeText.trim().slice(0, MAX_TEXT_CHARS);
+    const url  = intakeUrl.trim();
+    if (!text && !url) { setIntakeErr("Paste solicitation text, a URL, or upload a file first."); return; }
+    const parsed = parseOpportunityText(text, url);
+    let sourceGuess = "Pasted text";
+    if (url) { try { sourceGuess = new URL(url.startsWith("http") ? url : "https://" + url).hostname.replace("www.", ""); } catch { sourceGuess = "URL"; } }
+    const form = {
+      title: parsed.title || "", agency: parsed.agency || "", due_date: parsed.due_date || "",
+      opportunity_url: url || parsed.source_url || "", source: sourceGuess, category: "",
+      description: (parsed.description || text).slice(0, 500),
+      estimated_value: parsed.estimated_value || "", portal_login_needed: "unknown",
+      document_link: "", notes: (parsed.notes || "").slice(0, 220),
+      source_type: url ? "url" : "email/PDF"
+    };
+    setEditForm(form);
+    setIntakeErr("");
+    setIntakeSaved(false);
+    setFulfillment(suggestFulfillmentPartners(text || form.description, form.category));
+    setSearchTerms(generateIntakeSearchTerms(form.title, form.agency, form.category, text));
+  };
+
+  const setField = (k, v) => setEditForm(prev => ({ ...prev, [k]: v }));
+
+  const handleAdd = () => {
+    const required = ["title", "agency", "source", "category", "description"];
+    const missing  = required.filter(k => !String(editForm[k] || "").trim());
+    if (missing.length) { setIntakeErr("Complete required field(s): " + missing.map(label).join(", ") + "."); return; }
+    onAdd(createManualDiscoveryOpportunity({ ...editForm }));
+    setIntakeSaved(true);
+    setIntakeText(""); setIntakeUrl(""); setEditForm(null);
+    setFulfillment([]); setSearchTerms([]);
+    setFileStatus(""); setIntakeErr("");
+  };
+
+  const handleClear = () => { setEditForm(null); setFulfillment([]); setSearchTerms([]); setIntakeSaved(false); setIntakeErr(""); };
+
+  return (
+    <div className="card form">
+      <div className="panel-head"><h3>AI-Assisted Opportunity Intake</h3><span className="badge success">Smart Prefill</span></div>
+      <p className="muted">Paste a URL, upload a PDF or text file, or paste solicitation text — fields will be pre-populated for review before saving. Text is capped at 6,000 characters and files at 2 MB.</p>
+      {intakeSaved && <p className="badge success">Opportunity added to Discovery. See it in Top Matches for Review below.</p>}
+      <div className="tabs">
+        {[["text","Paste Text"],["url","Paste URL"],["file","Upload PDF / Doc"]].map(([v,lbl]) =>
+          <button key={v} className={intakeTab===v?"active":""} onClick={()=>{setIntakeTab(v);setIntakeErr("");}}>{lbl}</button>
+        )}
+      </div>
+      {intakeTab==="text" && <label>Solicitation text<textarea rows="6" value={intakeText} onChange={e=>setIntakeText(e.target.value.slice(0,MAX_TEXT_CHARS))} placeholder="Paste the full solicitation, bid notice, email body, or opportunity description here..." /></label>}
+      {intakeTab==="url" && <><label>Opportunity URL<input value={intakeUrl} onChange={e=>setIntakeUrl(e.target.value)} placeholder="https://sam.gov/opp/..." /></label><label>Solicitation text (paste manually if the portal requires a login)<textarea rows="5" value={intakeText} onChange={e=>setIntakeText(e.target.value.slice(0,MAX_TEXT_CHARS))} placeholder="Paste opportunity text here. Live scraping is not available for credentialed portals." /></label></>}
+      {intakeTab==="file" && <><label>Upload PDF or text file (max 2 MB)<input type="file" accept=".pdf,.txt,.doc,.docx,.rtf,.md" onChange={readFile} disabled={fileLoading} /></label>{fileLoading && <p className="muted">Reading file — please wait...</p>}{!fileLoading && fileStatus && <p className="muted">{fileStatus}</p>}<label>Extracted or additional text<textarea rows="4" value={intakeText} onChange={e=>setIntakeText(e.target.value.slice(0,MAX_TEXT_CHARS))} placeholder="Extracted text appears here. Edit or add more context before extracting fields." /></label></>}
+      {intakeErr && !editForm && <p className="badge danger">{intakeErr}</p>}
+      <div className="actions">
+        <button className="btn" onClick={handleExtract} disabled={fileLoading}>Extract &amp; Prefill Fields</button>
+        {editForm && <button className="btn secondary" onClick={handleClear}>Clear</button>}
+      </div>
+      {editForm && <>
+        <hr />
+        <h4>Review &amp; Edit Before Saving</h4>
+        <p className="muted">Fields have been pre-populated. Correct anything that looks wrong, fill in Category, then save.</p>
+        <div className="grid three-col">
+          <label>Title *<input value={editForm.title} onChange={e=>setField("title",e.target.value)} /></label>
+          <label>Agency *<input value={editForm.agency} onChange={e=>setField("agency",e.target.value)} /></label>
+          <label>Due date<input type="date" value={editForm.due_date} onChange={e=>setField("due_date",e.target.value)} /></label>
+          <label>Opportunity URL<input value={editForm.opportunity_url} onChange={e=>setField("opportunity_url",e.target.value)} /></label>
+          <label>Source *<input value={editForm.source} onChange={e=>setField("source",e.target.value)} placeholder="SAM.gov, Alabama Buys..." /></label>
+          <label>Category *<input value={editForm.category} onChange={e=>setField("category",e.target.value)} placeholder="Admin services, supplies, training..." /></label>
+          <label>Estimated value<input type="number" min="0" value={editForm.estimated_value} onChange={e=>setField("estimated_value",e.target.value)} /></label>
+          <label>Portal/login needed<select value={editForm.portal_login_needed} onChange={e=>setField("portal_login_needed",e.target.value)}>{["unknown","yes","no"].map(o=><option key={o}>{o}</option>)}</select></label>
+          <label>Document link<input value={editForm.document_link} onChange={e=>setField("document_link",e.target.value)} placeholder="PDF or shared doc URL" /></label>
+        </div>
+        <label>Description *<textarea rows="4" value={editForm.description} onChange={e=>setField("description",e.target.value)} /></label>
+        <label>Notes<textarea rows="3" value={editForm.notes} onChange={e=>setField("notes",e.target.value)} placeholder="Bid details, login notes, quote needs, why this looks practical." /></label>
+        {intakeErr && <p className="badge danger">{intakeErr}</p>}
+        <div className="actions"><button className="btn" onClick={handleAdd}>Add to Discovery</button></div>
+        {fulfillment.length>0 && <div className="info-block"><h4>Fulfillment Suggestions</h4><p className="muted">Consider finding these types of partners before bidding:</p>{fulfillment.map(s=><div key={s.role} style={{marginBottom:".5rem"}}><strong>{s.role}:</strong> {s.reason}<br /><span className="muted">Search: <em>{s.search}</em></span></div>)}</div>}
+        {searchTerms.length>0 && <div className="info-block"><h4>Suggested Search Terms</h4><p className="muted">Use these to find suppliers, subcontractors, and teaming partners online:</p><div style={{display:"flex",flexWrap:"wrap",gap:".4rem",marginTop:".5rem"}}>{searchTerms.map(term=><span key={term} className="badge">{term}</span>)}</div></div>}
+      </>}
+    </div>
+  );
 }
 
 function GovernmentOpportunities({ governmentData, selectOpportunity, saveGovernmentOpportunity, deleteGovernmentOpportunity, setPage }) {
@@ -2428,7 +3826,7 @@ function GovernmentOpportunities({ governmentData, selectOpportunity, saveGovern
               <button className="btn secondary" onClick={() => deleteGovernmentOpportunity(item.id)}>Delete</button>
             </div></td>
           </tr>)}
-          {!visible.length && <tr><td colSpan="8" className="muted">No opportunities match these filters.</td></tr>}
+          {!visible.length && <tr><td colSpan="8" className="muted">{governmentData.opportunities.length ? "No opportunities match these filters." : "No saved government opportunities yet. Use Opportunity Discovery, Import Opportunity, or Add Opportunity to add a real record."}</td></tr>}
         </tbody></table></div>
       </div>
       {editing && <GovernmentOpportunityModal
@@ -2611,7 +4009,7 @@ function AIFitReview({ opportunity, updateOpportunity, setPage }) {
   };
   return (
     <>
-      <Title title="AI Fit Review" subtitle="Mock AI analysis for deciding whether to pursue, pass, or partner." action={<div className="actions"><button className="btn secondary" onClick={generate}>Generate AI Review</button><button className="btn" onClick={() => setPage("Subcontractor Finder")}>Find subcontractors</button></div>} />
+      <Title title="AI Fit Review" subtitle="Capital-aware fit analysis for deciding whether to pursue, pass, or partner." action={<div className="actions"><button className="btn secondary" onClick={generate}>Generate AI Review</button><button className="btn" onClick={() => setPage("Subcontractor Finder")}>Find subcontractors</button></div>} />
       <div className="grid metrics">
         <Metric label="Overall fit score" value={`${review.overall_fit_score ?? opportunity.ai_fit_score ?? opportunity.fit_score}%`} />
         <Metric label="Prime vs subcontract" value={review.prime_vs_subcontract} />
@@ -2639,6 +4037,7 @@ function AIFitReview({ opportunity, updateOpportunity, setPage }) {
 
 function SubcontractorFinder({ governmentData, updateGovernmentData, selectedOpportunity, setPage }) {
   const [filter, setFilter] = useState("");
+  const [form, setForm] = useState(normalizeGovernmentSubcontractor({ status: "not contacted", sam_registration_status: "unknown" }));
   const neededCategories = selectedOpportunity.subcontractor_categories?.length
     ? selectedOpportunity.subcontractor_categories
     : generateAIFitAnalysis(selectedOpportunity).suggested_subcontractor_categories;
@@ -2648,7 +4047,19 @@ function SubcontractorFinder({ governmentData, updateGovernmentData, selectedOpp
   const visible = governmentData.subcontractors
     .filter(item => JSON.stringify(item).toLowerCase().includes(filter.toLowerCase()))
     .sort((a, b) => matchScore(b) - matchScore(a));
-  const patchSubcontractor = (id, updates) => updateGovernmentData({ ...governmentData, subcontractors: governmentData.subcontractors.map(item => item.id === id ? { ...item, ...updates } : item) });
+  const selectedOutreach = governmentData.outreach.filter(item => item.opportunity_id === selectedOpportunity.id);
+  const attachedIds = new Set(selectedOutreach.map(item => item.subcontractor_id));
+  const updateForm = updates => setForm(normalizeGovernmentSubcontractor({ ...form, ...updates }));
+  const patchSubcontractor = (id, updates) => updateGovernmentData({
+    ...governmentData,
+    subcontractors: governmentData.subcontractors.map(item => item.id === id ? normalizeGovernmentSubcontractor({ ...item, ...updates }) : item)
+  });
+  const addSubcontractor = () => {
+    if (!form.company_name.trim()) return;
+    const record = normalizeGovernmentSubcontractor({ ...form, id: uid("sub"), created_at: today, updated_at: today });
+    updateGovernmentData({ ...governmentData, subcontractors: [record, ...governmentData.subcontractors] });
+    setForm(normalizeGovernmentSubcontractor({ status: "not contacted", sam_registration_status: "unknown" }));
+  };
   const attachToOutreach = subcontractorId => {
     const exists = governmentData.outreach.some(item => item.opportunity_id === selectedOpportunity.id && item.subcontractor_id === subcontractorId);
     if (exists) {
@@ -2663,15 +4074,46 @@ function SubcontractorFinder({ governmentData, updateGovernmentData, selectedOpp
   };
   return (
     <>
-      <Title title="Subcontractor Finder" subtitle={`Match subcontractors to ${selectedOpportunity.title}.`} action={<button className="btn" onClick={() => setPage("Outreach Tracker")}>Open outreach</button>} />
+      <Title title="Subcontractor Finder" subtitle={`Subcontractor CRM for ${selectedOpportunity.title}.`} action={<button className="btn" onClick={() => setPage("Outreach Tracker")}>Open outreach</button>} />
       <div className="card">
-        <div className="panel-head"><h3>Subcontractor Needs</h3><span className="mode">{neededCategories.length} suggested</span></div>
+        <div className="panel-head"><h3>Subcontractor Needs</h3><span className="mode">{selectedOutreach.length} attached</span></div>
         <div className="tabs section-tabs">{neededCategories.map(category => <button key={category} className="active" onClick={() => setFilter(category)}>{category}</button>)}</div>
+      </div>
+      <div className="card form">
+        <div className="panel-head"><h3>Add subcontractor</h3><span className="badge">Prime contractor CRM</span></div>
+        <div className="form-grid">
+          <label>Company name<input value={form.company_name} onChange={e => updateForm({ company_name: e.target.value })} /></label>
+          <label>Contact name<input value={form.contact_name} onChange={e => updateForm({ contact_name: e.target.value })} /></label>
+          <label>Email<input type="email" value={form.email} onChange={e => updateForm({ email: e.target.value })} /></label>
+          <label>Phone<input value={form.phone} onChange={e => updateForm({ phone: e.target.value })} /></label>
+          <label>Service category<input value={form.service_category} onChange={e => updateForm({ service_category: e.target.value })} /></label>
+          <label>Location<input value={form.location} onChange={e => updateForm({ location: e.target.value })} /></label>
+          <label>SAM registered<select value={form.sam_registration_status} onChange={e => updateForm({ sam_registration_status: e.target.value })}>{samRegistrationOptions.map(option => <option key={option} value={option}>{label(option)}</option>)}</select></label>
+          <label>Status<select value={form.status} onChange={e => updateForm({ status: e.target.value })}>{subcontractorStatuses.map(status => <option key={status} value={status}>{label(status)}</option>)}</select></label>
+          <label>Last contacted date<input type="date" value={form.last_contact_date || ""} onChange={e => updateForm({ last_contact_date: e.target.value })} /></label>
+          <label>Next follow-up date<input type="date" value={form.next_follow_up_date || ""} onChange={e => updateForm({ next_follow_up_date: e.target.value })} /></label>
+        </div>
+        <label>Notes<textarea value={form.notes || ""} onChange={e => updateForm({ notes: e.target.value })} /></label>
+        <div className="actions"><button className="btn" onClick={addSubcontractor}>Add to CRM</button></div>
       </div>
       <div className="card">
         <div className="toolbar"><input placeholder="Search by company, service, location, status..." value={filter} onChange={e => setFilter(e.target.value)} /></div>
-        <div className="table-wrap"><table><thead><tr>{["company", "capability", "location", "contact_info", "SAM_registered", "outreach_status", "last_contact_date", "notes"].map(c => <th key={c}>{label(c)}</th>)}<th>Actions</th></tr></thead><tbody>
-          {visible.map(item => <tr key={item.id}><td><strong>{item.company_name}</strong>{matchScore(item) ? <span className="muted table-subline">Suggested match</span> : null}</td><td>{item.service_category}</td><td>{item.location}</td><td><strong>{item.contact_name}</strong><br /><span className="muted">{item.email}<br />{item.phone}</span></td><td>{item.SAM_registered ? "Yes" : "No"}</td><td><select value={item.status} onChange={e => patchSubcontractor(item.id, { status: e.target.value })}>{["Not contacted", "Drafted", "Sent", "Responded", "Interested", "Declined", "Quote received", "Follow up needed"].map(status => <option key={status}>{status}</option>)}</select></td><td>{item.last_contact_date || "Not yet"}</td><td>{item.notes}</td><td><button className="btn secondary" onClick={() => attachToOutreach(item.id)}>Attach</button></td></tr>)}
+        <div className="table-wrap subcontractor-crm"><table><thead><tr>{["company", "contact", "email", "phone", "service_category", "location", "SAM_registered", "status", "last_contacted", "next_follow_up", "notes"].map(c => <th key={c}>{label(c)}</th>)}<th>Actions</th></tr></thead><tbody>
+          {visible.map(item => <tr key={item.id}>
+            <td><strong>{item.company_name}</strong>{matchScore(item) ? <span className="muted table-subline">Suggested match</span> : null}{attachedIds.has(item.id) ? <span className="badge success table-subline">Attached</span> : null}</td>
+            <td><input value={item.contact_name || ""} onChange={e => patchSubcontractor(item.id, { contact_name: e.target.value })} /></td>
+            <td><input type="email" value={item.email || ""} onChange={e => patchSubcontractor(item.id, { email: e.target.value })} /></td>
+            <td><input value={item.phone || ""} onChange={e => patchSubcontractor(item.id, { phone: e.target.value })} /></td>
+            <td><input value={item.service_category || ""} onChange={e => patchSubcontractor(item.id, { service_category: e.target.value })} /></td>
+            <td><input value={item.location || ""} onChange={e => patchSubcontractor(item.id, { location: e.target.value })} /></td>
+            <td><select value={item.sam_registration_status || "unknown"} onChange={e => patchSubcontractor(item.id, { sam_registration_status: e.target.value })}>{samRegistrationOptions.map(option => <option key={option} value={option}>{label(option)}</option>)}</select></td>
+            <td><select value={item.status} onChange={e => patchSubcontractor(item.id, { status: e.target.value })}>{subcontractorStatuses.map(status => <option key={status} value={status}>{label(status)}</option>)}</select></td>
+            <td><input type="date" value={item.last_contact_date || ""} onChange={e => patchSubcontractor(item.id, { last_contact_date: e.target.value })} /></td>
+            <td><input type="date" value={item.next_follow_up_date || ""} onChange={e => patchSubcontractor(item.id, { next_follow_up_date: e.target.value })} /></td>
+            <td><textarea value={item.notes || ""} onChange={e => patchSubcontractor(item.id, { notes: e.target.value })} /></td>
+            <td><button className="btn secondary" onClick={() => attachToOutreach(item.id)}>{attachedIds.has(item.id) ? "Open" : "Attach"}</button></td>
+          </tr>)}
+          {!visible.length && <tr><td colSpan="12" className="muted">{governmentData.subcontractors.length ? "No subcontractors match this filter." : "No subcontractors in the CRM yet. Add real subcontractors here, then attach them to opportunities."}</td></tr>}
         </tbody></table></div>
       </div>
     </>
@@ -2680,22 +4122,40 @@ function SubcontractorFinder({ governmentData, updateGovernmentData, selectedOpp
 
 function OutreachTracker({ governmentData, updateGovernmentData, selectedOpportunity }) {
   const [subcontractorId, setSubcontractorId] = useState(governmentData.subcontractors[0]?.id || "");
-  const rows = governmentData.outreach.filter(item => item.opportunity_id === selectedOpportunity.id);
+  const [opportunityFilter, setOpportunityFilter] = useState(selectedOpportunity.id || "all");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [followUpFilter, setFollowUpFilter] = useState("due");
+  const baseRows = governmentData.outreach.filter(item => opportunityFilter === "all" || item.opportunity_id === opportunityFilter);
+  const followUpMatches = row => {
+    if (followUpFilter === "all") return true;
+    const days = daysUntil(row.follow_up_date);
+    if (followUpFilter === "due") return days !== null && days <= 0;
+    if (followUpFilter === "next7") return days !== null && days >= 0 && days <= 7;
+    if (followUpFilter === "missing") return !row.follow_up_date;
+    return true;
+  };
+  const rows = baseRows.filter(item => {
+    const matchesStatus = statusFilter === "All" || normalizeOutreachStatus(item.status) === statusFilter;
+    return matchesStatus && followUpMatches(item);
+  });
   const stats = getOutreachStats(rows);
   const draftAll = () => {
     const nextOutreach = governmentData.outreach.map(item => {
-      if (item.opportunity_id !== selectedOpportunity.id) return item;
+      if (opportunityFilter !== "all" && item.opportunity_id !== opportunityFilter) return item;
       const sub = getSubcontractor(governmentData, item.subcontractor_id);
-      return { ...item, status: "Draft", draft_email: draftOutreachEmail(selectedOpportunity, sub || {}) };
+      const opportunity = governmentData.opportunities.find(row => row.id === item.opportunity_id) || selectedOpportunity;
+      return { ...item, status: "Draft", draft_email: draftOutreachEmail(opportunity, sub || {}) };
     });
     updateGovernmentData({ ...governmentData, outreach: nextOutreach });
   };
   const addOutreach = () => {
-    if (!subcontractorId || rows.some(item => item.subcontractor_id === subcontractorId)) return;
-    updateGovernmentData({ ...governmentData, outreach: [createOutreachRecord(selectedOpportunity.id, subcontractorId), ...governmentData.outreach] });
+    const targetOpportunityId = opportunityFilter === "all" ? selectedOpportunity.id : opportunityFilter;
+    if (!subcontractorId || governmentData.outreach.some(item => item.opportunity_id === targetOpportunityId && item.subcontractor_id === subcontractorId)) return;
+    updateGovernmentData({ ...governmentData, outreach: [createOutreachRecord(targetOpportunityId, subcontractorId), ...governmentData.outreach] });
   };
   const patchOutreach = (id, updates) => {
     const current = governmentData.outreach.find(item => item.id === id);
+    const opportunityId = current?.opportunity_id || selectedOpportunity.id;
     const nextUpdates = { ...updates };
     const reminderAdditions = [];
     if (normalizeOutreachStatus(updates.status) === "Sent") {
@@ -2704,7 +4164,7 @@ function OutreachTracker({ governmentData, updateGovernmentData, selectedOpportu
       nextUpdates.follow_up_date = updates.follow_up_date || addBusinessDays(today, 2);
       nextUpdates.notes = updates.notes || "Outreach sent. Follow-up reminder created automatically.";
       reminderAdditions.push(createGovernmentReminder({
-        opportunityId: selectedOpportunity.id,
+        opportunityId,
         subcontractorId: current?.subcontractor_id || "",
         type: "Outreach follow-up",
         dueDate: nextUpdates.follow_up_date,
@@ -2712,12 +4172,32 @@ function OutreachTracker({ governmentData, updateGovernmentData, selectedOpportu
         notes: "Follow up 2 business days after outreach was marked sent."
       }));
     }
+    if (normalizeOutreachStatus(updates.status) === "Called") {
+      nextUpdates.status = "Called";
+      nextUpdates.last_contact_date = today;
+      nextUpdates.follow_up_date = updates.follow_up_date || current?.follow_up_date || addBusinessDays(today, 2);
+      nextUpdates.notes = updates.notes || "Call logged. Follow-up date set for the subcontractor.";
+      reminderAdditions.push(createGovernmentReminder({
+        opportunityId,
+        subcontractorId: current?.subcontractor_id || "",
+        type: "Outreach follow-up",
+        dueDate: nextUpdates.follow_up_date,
+        priority: "Normal",
+        notes: "Follow up after subcontractor call."
+      }));
+    }
+    if (normalizeOutreachStatus(updates.status) === "Responded") {
+      nextUpdates.status = "Responded";
+      nextUpdates.last_contact_date = today;
+      nextUpdates.follow_up_date = updates.follow_up_date || current?.follow_up_date || addBusinessDays(today, 2);
+      nextUpdates.response_summary = updates.response_summary || current?.response_summary || "Subcontractor responded. Capture interest, quote needs, and availability.";
+    }
     if (normalizeOutreachStatus(updates.status) === "Quote Requested") {
       nextUpdates.status = "Quote Requested";
       nextUpdates.last_contact_date = nextUpdates.last_contact_date || today;
       nextUpdates.follow_up_date = updates.follow_up_date || current?.follow_up_date || addBusinessDays(today, 2);
       reminderAdditions.push(createGovernmentReminder({
-        opportunityId: selectedOpportunity.id,
+        opportunityId,
         subcontractorId: current?.subcontractor_id || "",
         type: "Quote due",
         dueDate: nextUpdates.follow_up_date,
@@ -2729,7 +4209,7 @@ function OutreachTracker({ governmentData, updateGovernmentData, selectedOpportu
       nextUpdates.status = "Follow Up Needed";
       nextUpdates.follow_up_date = updates.follow_up_date || current?.follow_up_date || today;
       reminderAdditions.push(createGovernmentReminder({
-        opportunityId: selectedOpportunity.id,
+        opportunityId,
         subcontractorId: current?.subcontractor_id || "",
         type: "Outreach follow-up",
         dueDate: nextUpdates.follow_up_date,
@@ -2737,21 +4217,34 @@ function OutreachTracker({ governmentData, updateGovernmentData, selectedOpportu
         notes: "Outreach needs follow-up."
       }));
     }
+    const crmStatus = updates.status ? subcontractorStatusFromOutreach(updates.status) : "";
     updateGovernmentData({
       ...governmentData,
       outreach: governmentData.outreach.map(item => item.id === id ? { ...item, ...nextUpdates } : item),
+      subcontractors: governmentData.subcontractors.map(item => item.id === current?.subcontractor_id ? normalizeGovernmentSubcontractor({
+        ...item,
+        status: crmStatus || item.status,
+        last_contact_date: nextUpdates.last_contact_date || item.last_contact_date,
+        next_follow_up_date: nextUpdates.follow_up_date || item.next_follow_up_date
+      }) : item),
       reminders: mergeGovernmentReminders(governmentData.reminders || [], reminderAdditions)
     });
   };
   const markOutreach = (row, status) => {
     const updates = { status };
     if (status === "Sent") updates.follow_up_date = row.follow_up_date || addBusinessDays(today, 2);
+    if (status === "Called") updates.follow_up_date = row.follow_up_date || addBusinessDays(today, 2);
+    if (status === "Responded") updates.follow_up_date = row.follow_up_date || addBusinessDays(today, 2);
     if (status === "Follow Up Needed" && !row.follow_up_date) updates.follow_up_date = today;
     patchOutreach(row.id, updates);
   };
+  const scheduleFollowUp = row => patchOutreach(row.id, {
+    status: "Follow Up Needed",
+    follow_up_date: row.follow_up_date || addBusinessDays(today, 2)
+  });
   return (
     <>
-      <Title title="Outreach Tracker" subtitle={`Track subcontractor outreach for ${selectedOpportunity.title}.`} action={<button className="btn" onClick={draftAll}>Draft Outreach</button>} />
+      <Title title="Outreach Tracker" subtitle="Manage subcontractor follow-ups for government opportunities." action={<button className="btn" onClick={draftAll}>Draft Outreach</button>} />
       <div className="grid metrics">
         <Metric label="Drafts" value={stats.drafts} />
         <Metric label="Sent" value={stats.sent} />
@@ -2760,21 +4253,31 @@ function OutreachTracker({ governmentData, updateGovernmentData, selectedOpportu
         <Metric label="Interested partners" value={stats.interested} />
         <Metric label="Quotes received" value={stats.quotes} />
       </div>
+      <div className="card toolbar filter-bar">
+        <label>Opportunity<select value={opportunityFilter} onChange={e => setOpportunityFilter(e.target.value)}><option value="all">All opportunities</option>{governmentData.opportunities.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
+        <label>Status<select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All</option>{outreachStatuses.map(status => <option key={status}>{status}</option>)}</select></label>
+        <label>Next follow-up due<select value={followUpFilter} onChange={e => setFollowUpFilter(e.target.value)}><option value="due">Due or overdue</option><option value="next7">Next 7 days</option><option value="missing">No follow-up date</option><option value="all">All follow-ups</option></select></label>
+      </div>
       <div className="card toolbar">
-        <select value={subcontractorId} onChange={e => setSubcontractorId(e.target.value)}>{governmentData.subcontractors.map(item => <option key={item.id} value={item.id}>{item.company_name} - {item.service_category}</option>)}</select>
-        <button className="btn" onClick={addOutreach}>Attach subcontractor</button>
+        {governmentData.subcontractors.length ? <select value={subcontractorId} onChange={e => setSubcontractorId(e.target.value)}>{governmentData.subcontractors.map(item => <option key={item.id} value={item.id}>{item.company_name} - {item.service_category}</option>)}</select> : <span className="muted">Add a real subcontractor in Subcontractor Finder before creating outreach.</span>}
+        <button className="btn" onClick={addOutreach} disabled={!governmentData.subcontractors.length}>Attach subcontractor</button>
       </div>
       <div className="grid two-col">
         {rows.map(row => {
+          const opportunity = governmentData.opportunities.find(item => item.id === row.opportunity_id) || selectedOpportunity;
           const sub = getSubcontractor(governmentData, row.subcontractor_id);
-          const outreachEmail = draftOutreachEmail(selectedOpportunity, sub || {});
-          const followUpEmail = draftFollowUpEmail(selectedOpportunity, sub || {});
-          const callScript = draftCallScript(selectedOpportunity, sub || {});
-          const capabilityIntro = draftCapabilityIntro(selectedOpportunity, sub || {});
-          const linkedInMessage = draftLinkedInMessage(selectedOpportunity, sub || {});
+          const outreachEmail = draftOutreachEmail(opportunity, sub || {});
+          const followUpEmail = draftFollowUpEmail(opportunity, sub || {});
+          const callScript = draftCallScript(opportunity, sub || {});
+          const capabilityIntro = draftCapabilityIntro(opportunity, sub || {});
+          const linkedInMessage = draftLinkedInMessage(opportunity, sub || {});
           const draft = row.draft_email || outreachEmail;
           return <div className="card form" key={row.id}>
-            <div className="panel-head"><h3>{sub?.company_name || "Subcontractor"}</h3><span className="badge">{row.status}</span></div>
+            <div className="panel-head"><h3>{sub?.company_name || "Subcontractor"}</h3><span className="badge">{normalizeOutreachStatus(row.status)}</span></div>
+            <div className="info-block">
+              <h4>{opportunity.title}</h4>
+              <p>{opportunity.agency || "Agency TBD"} - {sub?.service_category || "Capability TBD"} - follow-up {row.follow_up_date ? dueLabel(row.follow_up_date) : "not scheduled"}</p>
+            </div>
             <label>Status<select value={row.status} onChange={e => patchOutreach(row.id, { status: e.target.value })}>{outreachStatuses.map(status => <option key={status}>{status}</option>)}</select></label>
             <label>Date created<input value={row.created_at || ""} onChange={e => patchOutreach(row.id, { created_at: e.target.value })} /></label>
             <label>Last contact date<input type="date" value={row.last_contact_date || ""} onChange={e => patchOutreach(row.id, { last_contact_date: e.target.value })} /></label>
@@ -2782,19 +4285,22 @@ function OutreachTracker({ governmentData, updateGovernmentData, selectedOpportu
             <label>Response summary<textarea value={row.response_summary || ""} onChange={e => patchOutreach(row.id, { response_summary: e.target.value })} /></label>
             <label>Notes<textarea value={row.notes || ""} onChange={e => patchOutreach(row.id, { notes: e.target.value })} /></label>
             <div className="actions">
+              <button className="btn secondary" onClick={() => markOutreach(row, "Sent")}>Mark emailed</button>
+              <button className="btn secondary" onClick={() => markOutreach(row, "Called")}>Mark called</button>
+              <button className="btn secondary" onClick={() => markOutreach(row, "Responded")}>Mark responded</button>
+              <button className="btn secondary" onClick={() => scheduleFollowUp(row)}>Schedule follow-up</button>
+            </div>
+            <div className="actions">
               <button className="btn secondary" onClick={() => patchOutreach(row.id, { draft_email: outreachEmail, status: "Draft" })}>Generate initial outreach email</button>
               <button className="btn secondary" onClick={() => patchOutreach(row.id, { draft_email: followUpEmail, status: "Follow Up Needed" })}>Generate follow-up email</button>
               <button className="btn secondary" onClick={() => patchOutreach(row.id, { draft_email: capabilityIntro, status: "Ready" })}>Capability intro</button>
               <button className="btn secondary" onClick={() => patchOutreach(row.id, { draft_email: callScript })}>Generate short call script</button>
               <button className="btn secondary" onClick={() => patchOutreach(row.id, { draft_email: linkedInMessage })}>Generate LinkedIn message</button>
             </div>
-            <div className="actions">
-              {outreachStatuses.map(status => <button key={status} className="btn secondary" onClick={() => markOutreach(row, status)}>Mark {status}</button>)}
-            </div>
             <label>Draft Outreach<textarea value={row.draft_email || ""} placeholder={draft} onChange={e => patchOutreach(row.id, { draft_email: e.target.value })} /></label>
           </div>;
         })}
-        {!rows.length && <div className="card"><p className="muted">No subcontractors attached to this opportunity yet.</p></div>}
+        {!rows.length && <div className="card"><p className="muted">No subcontractor follow-ups match these filters.</p></div>}
       </div>
     </>
   );
@@ -2904,12 +4410,13 @@ function AwardsTracker({ governmentData, updateGovernmentData }) {
         <Metric label="Upcoming pending awards" value={stats.upcomingPendingAwards} />
       </div>
       <div className="card">
-        <div className="panel-head"><h3>Government Awards Report</h3><span className="mode">Demo/local report</span></div>
+        <div className="panel-head"><h3>Government Awards Report</h3><span className="mode">Live/local records</span></div>
         <div className="table-wrap"><table><thead><tr>{["opportunity", "agency", "award_status", "award_amount", "prime_or_subcontract", "contract_number", "period_of_performance", "reason_lost"].map(c => <th key={c}>{label(c)}</th>)}</tr></thead><tbody>
           {governmentData.opportunities.map(item => {
             const outcome = normalizeAwardOutcome(item.award_outcome, item);
             return <tr key={item.id}><td><strong>{item.title}</strong></td><td>{outcome.awarding_agency}</td><td><span className={outcome.award_status === "Awarded" ? "badge success" : outcome.award_status === "Lost" ? "badge warn" : "badge"}>{outcome.award_status}</span></td><td>{amount(outcome.award_amount || item.estimated_value)}</td><td>{outcome.prime_or_subcontract}</td><td>{outcome.contract_number || "TBD"}</td><td>{outcome.period_of_performance || "TBD"}</td><td>{outcome.reason_lost || ""}</td></tr>;
           })}
+          {!governmentData.opportunities.length && <tr><td colSpan="8" className="muted">No award records yet. Add a real opportunity to the pipeline, then update award status here.</td></tr>}
         </tbody></table></div>
       </div>
       <div className="grid two-col">
@@ -2942,10 +4449,12 @@ function AwardsTracker({ governmentData, updateGovernmentData }) {
             <label>Internal notes<textarea value={outcome.internal_notes || ""} onChange={e => patchAward(item.id, { internal_notes: e.target.value })} /></label>
           </div>;
         })}
+        {!governmentData.opportunities.length && <div className="card"><p className="muted">No opportunities are available for award tracking yet.</p></div>}
       </div>
     </>
   );
 }
+*/
 
 function InfoBlock({ title, text }) {
   return <div className="info-block"><h4>{title}</h4><p>{text || "Not entered yet."}</p></div>;
@@ -2953,75 +4462,6 @@ function InfoBlock({ title, text }) {
 
 function InfoList({ title, items = [] }) {
   return <div className="info-block"><h4>{title}</h4>{items.length ? <ul>{items.map(item => <li key={item}>{item}</li>)}</ul> : <p className="muted">None listed yet.</p>}</div>;
-}
-
-function OperationsCenter({ page, runAutomations }) {
-  const items = {
-    Automations: operationsMock.automations,
-    "n8n Workflows": [
-      { title: "Opportunity digest workflow", detail: "Pull SAM.gov matches, score fit, send morning brief.", status: "To connect" },
-      { title: "Digital product sale alert", detail: "Route Etsy/Gumroad/Stan sales into revenue log.", status: "To connect" },
-      { title: "Client intake workflow", detail: "Form submission to client record, task, and welcome email.", status: "To connect" }
-    ],
-    "Workflow Health": [
-      { title: "Invoice automation", detail: "Local app workflow available now.", status: "Healthy" },
-      { title: "External n8n workflows", detail: "Waiting for webhook endpoints and credentials.", status: "Offline" }
-    ],
-    Logs: [
-      { title: "Activity log", detail: "Supabase activity logs are retained for creates, updates, deletes, uploads, and automations.", status: "Active" },
-      { title: "Integration logs", detail: "n8n execution logs will appear after connection.", status: "Future" }
-    ],
-    Tasks: operationsMock.highestValueActions,
-    "Calendar/Deadlines": operationsMock.deadlines.map(item => ({ title: item.title, detail: item.date, status: item.type }))
-  };
-  return <MockWorkspace title={page} subtitle="Operations command center for workflows, tasks, logs, and deadlines." items={items[page] || []} action={page === "Automations" ? <button className="btn" onClick={runAutomations}>Run local automations</button> : null} />;
-}
-
-function AIWorkspacePage({ page }) {
-  const items = {
-    "Government Proposal Assistant": [
-      { title: "Proposal outline builder", detail: "Turn opportunity notes into compliance matrix, win themes, and section outline.", status: "Mock" },
-      { title: "Past performance matcher", detail: "Map HR consulting work to agency requirements.", status: "Mock" }
-    ],
-    "Capability Statement Generator": [
-      { title: "Core one-page capability statement", detail: "Generate differentiators, NAICS, services, and contact block.", status: "Mock" }
-    ],
-    "Investigation Report Generator": [
-      { title: "Existing investigation exporter", detail: "Current investigation report print/download remains available under HR Consulting.", status: "Available" }
-    ],
-    "Email Writer": [
-      { title: "Client follow-up email", detail: "Draft concise client updates, invoice reminders, and proposal outreach.", status: "Mock" }
-    ],
-    "Prompt Library": [
-      { title: "HR consulting prompts", detail: "Recommendation memos, corrective action, policy drafts, and investigation questions.", status: "Starter set" },
-      { title: "Government prompts", detail: "Opportunity fit checks, capability statement bullets, and proposal outlines.", status: "Starter set" }
-    ]
-  };
-  return <MockWorkspace title={page} subtitle="AI workspace placeholder using mock workflows until connected to production AI tools." items={items[page] || []} />;
-}
-
-function AdminPage({ page, realMode }) {
-  const items = {
-    Users: [
-      { title: "Current user access", detail: realMode ? "Managed through Supabase Auth." : "Demo mode has no user management.", status: realMode ? "Secured" : "Demo" }
-    ],
-    Integrations: [
-      { title: "Supabase", detail: "Auth, database, storage, and RLS are active when signed in.", status: realMode ? "Connected" : "Not connected" },
-      { title: "Netlify", detail: "Static deployment target for anywhere access.", status: "Configured" },
-      { title: "n8n", detail: "Workflow automation layer to connect later.", status: "Future" }
-    ],
-    "API Keys/Secrets": [
-      { title: "Secrets vault placeholder", detail: "Store production secrets in Netlify, Supabase, or n8n environments, not in browser code.", status: "Important" }
-    ],
-    Storage: [
-      { title: "hr-documents bucket", detail: "Private Supabase Storage bucket scoped by signed-in user.", status: "Ready" }
-    ],
-    "System Status": [
-      { title: "Application shell", detail: "Static React app deployable on Netlify.", status: "Online" },
-      { title: "Database security", detail: "RLS policies protect owner-scoped records.", status: "Enabled" }
-    ]
-  };
-  return <MockWorkspace title={page} subtitle="Administrative controls and production-readiness placeholders." items={items[page] || []} />;
 }
 
 function MockWorkspace({ title, subtitle, items, action }) {
@@ -3069,47 +4509,6 @@ function Timeline({ title, rows }) {
   return <div className="activity timeline"><h3>{title}</h3>
     {rows.length ? rows.map(row => <div key={row.id}><strong>{String(row.created_at || row.interview_date || today).slice(0, 10)}</strong><span className="muted">{row.note_body || row.interview_notes || row.message}</span></div>) : <p className="muted">No entries yet.</p>}
   </div>;
-}
-
-function Settings({ data, config, saveSettings, exportBackup, realMode }) {
-  const [form, setForm] = useState({ ...defaultSettings, ...data.settings, ...config });
-  return <><Title title="Settings" subtitle={realMode ? "Business profile is saved to Supabase profiles." : "Configure Supabase URL/key here, or keep using demo mode."} /><div className="card form form-grid">
-    {Object.keys(defaultSettings).map(k => <label key={k}>{label(k)}<input value={form[k] || ""} onChange={e => setForm({ ...form, [k]: e.target.value })} /></label>)}
-    <button className="btn" onClick={() => saveSettings(form)}>Save settings</button>
-    <button className="btn secondary" onClick={exportBackup}>Export JSON backup</button>
-  </div></>;
-}
-
-function Reports({ data }) {
-  const reports = [
-    ["Revenue by month", groupSum(data.invoices, i => (i.invoice_date || "").slice(0, 7), "total"), true],
-    ["Outstanding invoices", Object.fromEntries(data.invoices.filter(i => i.status !== "Paid").map(i => [i.invoice_number, i.total])), true],
-    ["Clients by status", group(data.clients, "status"), false],
-    ["Open cases by client", group(data.cases.filter(c => !["Closed", "Resolved"].includes(c.status)).map(c => ({ ...c, client: clientName(data, c.client_id) })), "client"), false],
-    ["Investigation status report", group(data.investigations, "status"), false],
-    ["Billable hours by client", groupSum(data.engagements.filter(e => e.billable).map(e => ({ ...e, client: clientName(data, e.client_id) })), e => e.client, "hours_worked"), false],
-    ["Services by category", group(data.engagements, "service_category"), false]
-  ];
-  const exportAll = () => {
-    const rows = reports.flatMap(([title, values]) => Object.entries(values).map(([label, value]) => ({ report: title, label, value })));
-    downloadText("v-solutions-reports.csv", toCsv(rows), "text/csv");
-  };
-  return <><Title title="Reports" subtitle="Phase 4 reports with CSV exports." action={<button className="btn" onClick={exportAll}>Export all CSV</button>} /><div className="grid two-col">{reports.map(([title, rows, money]) => <ReportCard key={title} title={title} rows={rows} money={money} />)}</div></>;
-}
-
-function ReportCard({ title, rows, money }) {
-  const chartRows = Object.entries(rows).map(([label, value]) => ({ label, value, money }));
-  const exportOne = () => downloadText(`${title.toLowerCase().replaceAll(" ", "-")}.csv`, toCsv(chartRows), "text/csv");
-  return <div className="card">
-    <div className="panel-head"><h3>{title}</h3><button className="btn secondary" onClick={exportOne}>CSV</button></div>
-    <Bars title="" rows={chartRows} />
-  </div>;
-}
-
-function Search({ data, query, setPage }) {
-  const tables = ["clients", "contacts", "engagements", "cases", "investigations", "invoices", "documents"];
-  const results = tables.flatMap(t => (data[t] || []).filter(r => JSON.stringify(r).toLowerCase().includes(query.toLowerCase())).map(r => ({ table: t, row: r })));
-  return <><Title title="Search Results" subtitle={`${results.length} result(s) for "${query}".`} /><div className="card activity">{results.map(({ table, row }) => <div key={`${table}-${row.id}`}><strong>{table}: {row.company_name || row.name || row.case_number || row.investigation_number || row.invoice_number || row.title || row.service_category}</strong><span className="muted">{clientName(data, row.client_id)} </span><button className="btn secondary" onClick={() => setPage(table[0].toUpperCase() + table.slice(1))}>Open module</button></div>)}</div></>;
 }
 
 function InvoiceTools({ data, createInvoiceFromEngagements }) {
@@ -3164,6 +4563,19 @@ function Bars({ title, rows }) {
 function label(k) { return k.replaceAll("_", " ").replace(/\b\w/g, m => m.toUpperCase()); }
 function cell(row, c, data) { const v = c === "client_id" ? clientName(data, row[c]) : row[c]; if (c.includes("amount") || c === "total") return amount(v); if (["status", "priority", "invoice_status"].includes(c)) return <span className={`badge ${statusClass(v)}`}>{v}</span>; if (typeof v === "boolean") return v ? "Yes" : "No"; return v || ""; }
 function group(rows, key) { return rows.reduce((a, r) => ({ ...a, [r[key] || "Unspecified"]: (a[r[key] || "Unspecified"] || 0) + 1 }), {}); }
-function groupSum(rows, keyFn, valueKey) { return rows.reduce((a, r) => { const k = typeof keyFn === "function" ? keyFn(r) : r[keyFn]; return { ...a, [k || "Unspecified"]: (a[k || "Unspecified"] || 0) + Number(r[valueKey] || 0) }; }, {}); }
+function groupSum(rows, keyFn, valueKey) {
+  return rows.reduce((a, r) => {
+    const k =
+      typeof keyFn === "function"
+        ? keyFn(r)
+        : r[keyFn];
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    const label = k || "Unspecified";
+
+    return {
+      ...a,
+      [label]: (a[label] || 0) + Number(r[valueKey] || 0),
+    };
+  }, {});
+}
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));

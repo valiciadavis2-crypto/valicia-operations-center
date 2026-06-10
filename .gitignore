@@ -1,0 +1,8 @@
+node_modules/
+dist/
+npm-debug.log*
+.claude/
+src/.claude/
+backups/
+*-backup*
+srcapp-backup-before-fix.jsx/
